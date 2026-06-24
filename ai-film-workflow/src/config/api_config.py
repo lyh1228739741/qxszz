@@ -31,6 +31,10 @@ SUNO_BASE_URL = "https://api.suno.ai/v1"  # 请确认实际地址
 NOIZ_API_KEY = "your-noiz-api-key"
 NOIZ_BASE_URL = "https://api.noiz.ai/v1"  # 请确认实际地址
 
+# DeepSeek
+DEEPSEEK_API_KEY = "your-deepseek-api-key"
+DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
+
 # 默认模型配置
 DEFAULT_SCRIPT_MODEL = "gpt-4o"  # 或 "kimi-k2.6"
 DEFAULT_IMAGE_MODEL = "gpt-image-2"

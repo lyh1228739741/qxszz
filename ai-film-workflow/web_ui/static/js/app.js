@@ -524,6 +524,70 @@ async function makeFilm() {
     hideLoading();
 }
 
+// ========== 对话 ==========
+
+let chatHistory = [];
+
+function addChatBubble(role, content) {
+    const container = document.getElementById('chatMessages');
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role}`;
+    // 转换链接为可点击
+    const html = content
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    bubble.innerHTML = `
+        <div class="chat-avatar">${role === 'user' ? '👤' : '🤖'}</div>
+        <div class="chat-content">${html}</div>
+    `;
+    container.appendChild(bubble);
+    container.scrollTop = container.scrollHeight;
+}
+
+function quickChat(text) {
+    document.getElementById('chatInput').value = text;
+    sendChat();
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    input.value = '';
+    input.disabled = true;
+
+    addChatBubble('user', message);
+    chatHistory.push({ role: 'user', content: message });
+
+    // 显示 typing 指示器
+    const typingBubble = document.createElement('div');
+    typingBubble.className = 'chat-bubble ai';
+    typingBubble.id = 'typingBubble';
+    typingBubble.innerHTML = `
+        <div class="chat-avatar">🤖</div>
+        <div class="chat-content typing"><span>.</span><span>.</span><span>.</span></div>
+    `;
+    document.getElementById('chatMessages').appendChild(typingBubble);
+    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+
+    try {
+        const result = await apiCall('/api/chat', 'POST', {
+            messages: chatHistory,
+            provider: 'kimi'
+        });
+        document.getElementById('typingBubble')?.remove();
+        addChatBubble('ai', result.reply);
+        chatHistory.push({ role: 'assistant', content: result.reply });
+    } catch (e) {
+        document.getElementById('typingBubble')?.remove();
+        addChatBubble('ai', '😅 抱歉，我暂时无法回复，请稍后再试...');
+    }
+
+    input.disabled = false;
+    input.focus();
+}
+
 // ========== 初始化 ==========
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -16,6 +16,27 @@
                 <p class="subtitle">璐子秦出品 —— 有点傻但靠谱</p>
             </header>
 
+            <!-- 对话面板 -->
+            <section class="chat-section">
+                <h2>💬 AI 助手</h2>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-bubble ai">
+                        <div class="chat-avatar">🤖</div>
+                        <div class="chat-content">嗨！我是璐子秦，你的AI影片助手 🎬<br>跟我说说你想做什么样的影片，或者直接<a onclick="document.getElementById('projectName').focus()">创建项目</a>开始吧！</div>
+                    </div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="输入消息，聊聊你想拍的影片..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <button onclick="sendChat()" class="btn-primary">发送</button>
+                </div>
+                <div class="chat-quick-actions">
+                    <button onclick="quickChat('帮我写一个30秒的科幻短片剧本')" class="btn-quick">🚀 写科幻剧本</button>
+                    <button onclick="quickChat('我想做一个温馨的宠物故事')" class="btn-quick">🐱 宠物故事</button>
+                    <button onclick="quickChat('帮我做一个产品宣传片')" class="btn-quick">📦 产品宣传</button>
+                    <button onclick="quickChat('教我怎么开始')" class="btn-quick">❓ 教我开始</button>
+                </div>
+            </section>
+
             <section class="project-section">
                 <h2>项目</h2>
                 <div class="project-controls">
