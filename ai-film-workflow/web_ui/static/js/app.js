@@ -285,6 +285,20 @@ async function selectProject(name) {
         switchStage(nextStage);
         // 加载各阶段已有成果
         if (nextStage >= 2) loadPrevStageContent(nextStage);
+        // 如果阶段一已完成，加载剧本到文本框
+        if (stageCompletion[1]) {
+            try {
+                const scr = await apiCall(`/api/project/${name}/stage1/script`);
+                if (scr.content) {
+                    uploadedScriptContent = scr.content;
+                    document.getElementById('ideaInput').value = scr.content;
+                    document.getElementById('btnSkipScript').style.display = 'inline-block';
+                    document.getElementById('btnRemoveScript').style.display = 'inline-block';
+                    document.getElementById('btnGenerateScript').textContent = '重新生成剧本';
+                    document.getElementById('scriptUploadName').textContent = '(已保存)';
+                }
+            } catch(e) {}
+        }
         loadProjects();
         showSuccess(`已加载: ${name}`);
     } catch (e) { showError(e.message); }
