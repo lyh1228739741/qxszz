@@ -10,6 +10,8 @@ body {
 
 .container { max-width: 1200px; margin: 0 auto; }
 
+/* ===== 首页 ===== */
+
 header {
     text-align: center; padding: 40px 0;
     border-bottom: 2px solid #e94560; margin-bottom: 30px;
@@ -23,10 +25,6 @@ section {
     border: 1px solid rgba(255,255,255,0.1);
 }
 section h2 { color: #e94560; margin-bottom: 20px; font-size: 1.5em; }
-section h3 {
-    color: #0f3460; background: #e94560; padding: 10px 15px;
-    border-radius: 8px; margin-bottom: 15px; font-size: 1.2em;
-}
 
 button {
     padding: 10px 20px; border: none; border-radius: 6px;
@@ -55,9 +53,12 @@ textarea { resize: vertical; font-family: inherit; }
 select { cursor: pointer; }
 select option { background: #1a1a2e; color: #eee; }
 
+/* ===== 项目列表 ===== */
+
 .project-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
 .project-controls input { flex: 1; min-width: 200px; }
 .project-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 15px; }
+
 .project-card {
     background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;
     cursor: pointer; transition: all 0.3s; border: 2px solid transparent;
@@ -69,6 +70,8 @@ select option { background: #1a1a2e; color: #eee; }
 .project-card h4 { color: #e94560; margin-bottom: 5px; }
 .project-card p { color: #888; font-size: 0.9em; }
 
+.empty-hint { color: #888; text-align: center; padding: 30px; }
+
 /* 回收站按钮 */
 .btn-trash {
     background: transparent; border: none; font-size: 1.1em; cursor: pointer;
@@ -77,7 +80,8 @@ select option { background: #1a1a2e; color: #eee; }
 }
 .btn-trash:hover { opacity: 1; background: rgba(233,69,96,0.2); transform: scale(1.15); }
 
-/* 返回按钮 + 工作流顶栏 */
+/* ===== 工作流顶栏 ===== */
+
 .workflow-topbar {
     display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
     padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -91,27 +95,76 @@ select option { background: #1a1a2e; color: #eee; }
 .btn-back:hover { background: rgba(255,255,255,0.15); color: #fff; border-color: #e94560; }
 .project-title { color: #e94560; font-size: 1.4em; margin: 0; }
 
-/* 状态面板 */
-.status-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; }
-.status-item {
-    background: rgba(255,255,255,0.06); padding: 12px 15px; border-radius: 8px;
-    text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent;
-}
-.status-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
-.status-item.pending { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
-.status-item.in_progress { border-color: #f0c040; background: rgba(240,192,64,0.12); }
-.status-item.completed { border-color: #4ecca3; background: rgba(78,204,163,0.12); }
-.status-item label { display: block; color: #aaa; font-size: 0.85em; margin-bottom: 4px; }
-.status-item .stage-status { font-size: 0.85em; margin-top: 4px; display: block; }
-.status-item.pending .stage-status { color: #888; }
-.status-item.in_progress .stage-status { color: #f0c040; }
-.status-item.completed .stage-status { color: #4ecca3; }
+/* ===== 进度条 ===== */
 
-.stage { margin-bottom: 25px; background: rgba(255,255,255,0.03); border-radius: 10px; overflow: hidden; }
-.stage-content { padding: 20px; }
+.progress-bar {
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 30px; padding: 20px 10px;
+    background: rgba(255,255,255,0.03); border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap;
+}
+
+.progress-node {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; transition: all 0.3s; min-width: 70px; text-align: center;
+}
+
+.progress-node .node-dot {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 0.9em; margin-bottom: 6px;
+    transition: all 0.3s;
+    background: rgba(255,255,255,0.08);
+    color: #666;
+    border: 2px solid rgba(255,255,255,0.12);
+}
+
+.progress-node .node-label {
+    font-size: 0.78em; color: #666; transition: all 0.3s;
+}
+
+/* 当前阶段 */
+.progress-node.active { transform: scale(1.05); }
+.progress-node.active .node-dot {
+    background: #e94560; color: #fff; border-color: #e94560;
+    box-shadow: 0 0 16px rgba(233,69,96,0.5);
+}
+.progress-node.active .node-label { color: #e94560; font-weight: bold; }
+
+/* 已完成 */
+.progress-node.completed .node-dot {
+    background: #4ecca3; color: #1a1a2e; border-color: #4ecca3;
+}
+.progress-node.completed .node-label { color: #4ecca3; }
+.progress-node.completed .node-dot::after {
+    /* 移除数字，不显示 check */
+}
+
+/* 连接线 */
+.progress-line {
+    flex: 1; height: 2px;
+    background: rgba(255,255,255,0.08);
+    min-width: 20px; max-width: 80px; margin: 0 4px;
+    transition: all 0.5s; margin-bottom: 28px;
+}
+.progress-line.active { background: #4ecca3; }
+
+/* ===== 阶段面板 ===== */
+
+.stage-panel { animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stage-panel h2 { margin-bottom: 20px; }
+
+.stage-nav { margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); text-align: right; }
+
+.stage-desc { color: #888; margin-bottom: 15px; font-size: 0.95em; line-height: 1.5; }
 
 /* 可选阶段 */
-.optional-stage h3 { background: #1a3a5c; }
 .optional-tag { font-size: 0.7em; background: #f0c040; color: #1a1a2e; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
 .skip-row { display: flex; gap: 10px; margin-bottom: 15px; }
 
@@ -134,7 +187,7 @@ select option { background: #1a1a2e; color: #eee; }
 
 /* 资产 tabs */
 .asset-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
-.tab-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px 6px 0 0; padding: 10px 20px; cursor: pointer; color: #aaa; }
+.tab-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px 6px 0 0; padding: 10px 20px; cursor: pointer; color: #aaa; font-size: 0.95em; }
 .tab-btn.active { background: #e94560; color: white; border-color: #e94560; }
 .asset-tab { display: none; }
 .asset-tab.active { display: block; }
@@ -154,7 +207,6 @@ select option { background: #1a1a2e; color: #eee; }
 .final-result { text-align: center; padding: 30px; margin-top: 15px; }
 .final-result video { max-width: 100%; border-radius: 8px; }
 .final-options { margin: 10px 0; }
-.stage-desc { color: #888; margin-bottom: 15px; font-size: 0.95em; line-height: 1.5; }
 
 /* 进度 */
 .film-progress { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-top: 15px; font-family: monospace; font-size: 0.9em; }
@@ -170,12 +222,6 @@ select option { background: #1a1a2e; color: #eee; }
 .storyboard-table .shot-id { color: #e94560; font-weight: bold; }
 .storyboard-table .prompt { font-family: monospace; font-size: 0.85em; color: #aaa; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* 日志 */
-.log-display { background: rgba(0,0,0,0.5); border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.6; }
-.log-entry { margin-bottom: 5px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.log-entry.error { color: #e94560; }
-.log-entry.success { color: #4ecca3; }
-
 /* 加载 */
 .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
 .loading-spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #e94560; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -188,5 +234,9 @@ label input[type="checkbox"] { width: auto; }
 @media (max-width: 768px) {
     header h1 { font-size: 1.8em; }
     .project-controls { flex-direction: column; }
-    .status-display { grid-template-columns: 1fr; }
+    .progress-bar { padding: 14px 4px; }
+    .progress-node { min-width: 55px; }
+    .progress-node .node-dot { width: 28px; height: 28px; font-size: 0.75em; }
+    .progress-node .node-label { font-size: 0.65em; }
+    .progress-line { min-width: 8px; max-width: 30px; }
 }

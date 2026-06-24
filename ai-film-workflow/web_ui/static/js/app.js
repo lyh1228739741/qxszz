@@ -1,42 +1,31 @@
 /**
- * AI 影片工作流 - 5 阶段中文版
+ * AI 影片工作流 - 5 阶段独立页面版 + 进度条
  */
 
 let currentProject = null;
+let currentStage = 1;
 let uploadedScriptContent = null;
 let uploadedAssets = { characters: null, scenes: null, props: null };
 let stage4Skipped = false;
+let stageCompletion = {}; // {1: true, 2: false, ...}
 
 // ========== 工具 ==========
-
-function log(message, type = 'info') {
-    const logDisplay = document.getElementById('logDisplay');
-    const entry = document.createElement('div');
-    entry.className = `log-entry ${type}`;
-    const time = new Date().toLocaleTimeString();
-    entry.textContent = `[${time}] ${message}`;
-    logDisplay.appendChild(entry);
-    logDisplay.scrollTop = logDisplay.scrollHeight;
-}
 
 function showLoading(text = '处理中...') {
     document.getElementById('loadingText').textContent = text;
     document.getElementById('loading').style.display = 'flex';
 }
 function hideLoading() { document.getElementById('loading').style.display = 'none'; }
-
-function showError(message) { log(message, 'error'); alert('错误: ' + message); }
-function showSuccess(message) { log(message, 'success'); }
+function showError(message) { alert('错误: ' + message); }
+function showSuccess(message) { /* silent success */ }
 
 async function apiCall(url, method = 'GET', data = null) {
     const options = { method, headers: { 'Content-Type': 'application/json' } };
     if (data) options.body = JSON.stringify(data);
-    try {
-        const response = await fetch(url, options);
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-        return result;
-    } catch (error) { showError(error.message); throw error; }
+    const response = await fetch(url, options);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    return result;
 }
 
 // ========== 视图切换 ==========
@@ -44,30 +33,29 @@ async function apiCall(url, method = 'GET', data = null) {
 function showHomeView() {
     document.getElementById('homeView').style.display = 'block';
     document.getElementById('workflowView').style.display = 'none';
-    document.querySelector('.log-section').style.display = 'block';
     currentProject = null;
+    currentStage = 1;
     loadProjects();
 }
 
 function showWorkflowView(projectName) {
     document.getElementById('homeView').style.display = 'none';
     document.getElementById('workflowView').style.display = 'block';
-    document.querySelector('.log-section').style.display = 'block';
     document.getElementById('workflowProjectTitle').textContent = `🎬 ${projectName}`;
 }
 
 function goBackHome() {
-    if (currentProject) {
-        log(`离开项目: ${currentProject}`);
-    }
     currentProject = null;
+    currentStage = 1;
     stage4Skipped = false;
     uploadedAssets = { characters: null, scenes: null, props: null };
     uploadedScriptContent = null;
+    stageCompletion = {};
+    // 清空各阶段内容
     document.getElementById('scriptDisplay').textContent = '';
     document.getElementById('scriptRevision').style.display = 'none';
     document.getElementById('scriptFeedback').value = '';
-    document.getElementById('storyboardDisplay').textContent = '';
+    document.getElementById('storyboardDisplay').innerHTML = '';
     document.getElementById('storyboardRevision').style.display = 'none';
     document.getElementById('storyboardFeedback').value = '';
     document.getElementById('assetResults').innerHTML = '';
@@ -76,6 +64,56 @@ function goBackHome() {
     document.getElementById('filmProgress').style.display = 'none';
     document.getElementById('filmProgress').innerHTML = '';
     showHomeView();
+}
+
+// ========== 进度条 + 阶段切换 ==========
+
+function updateProgressBar() {
+    const nodes = document.querySelectorAll('.progress-node');
+    const lines = document.querySelectorAll('.progress-line');
+
+    nodes.forEach((node, i) => {
+        const stage = i + 1;
+        node.classList.remove('active', 'completed');
+        if (stage === currentStage) {
+            node.classList.add('active');
+        } else if (stageCompletion[stage]) {
+            node.classList.add('completed');
+        }
+    });
+
+    // 更新线条
+    lines.forEach((line, i) => {
+        line.classList.remove('active', 'completed');
+        const leftStage = i + 1;
+        if (leftStage < currentStage) {
+            line.classList.add('active');
+        }
+    });
+}
+
+function switchStage(stage) {
+    if (stage < 1 || stage > 5) return;
+
+    // 只允许跳转到已完成或当前阶段+1
+    if (stage > currentStage + 1) {
+        showError('请按顺序完成各阶段');
+        return;
+    }
+
+    currentStage = stage;
+
+    // 隐藏所有阶段面板
+    for (let i = 1; i <= 5; i++) {
+        document.getElementById(`stagePanel${i}`).style.display = 'none';
+    }
+
+    // 显示当前阶段
+    document.getElementById(`stagePanel${stage}`).style.display = 'block';
+    updateProgressBar();
+
+    // 滚动到顶部
+    document.getElementById('workflowView').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ========== 项目管理 ==========
@@ -87,14 +125,18 @@ async function createProject() {
     try {
         const result = await apiCall('/api/project/create', 'POST', { name });
         currentProject = name;
+        currentStage = 1;
         stage4Skipped = false;
+        stageCompletion = {};
         uploadedAssets = { characters: null, scenes: null, props: null };
         uploadedScriptContent = null;
+
         showWorkflowView(name);
-        updateStatus(result.status);
+        switchStage(1);
         showSuccess(`项目 "${name}" 创建成功`);
         loadProjects();
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 async function loadProjects() {
@@ -102,10 +144,12 @@ async function loadProjects() {
         const result = await apiCall('/api/projects');
         const list = document.getElementById('projectList');
         list.innerHTML = '';
-        if (result.projects.length === 0) {
-            list.innerHTML = '<p style="color:#888;text-align:center;padding:30px;">暂无项目，输入名称创建一个吧</p>';
+
+        if (!result.projects || result.projects.length === 0) {
+            list.innerHTML = '<p class="empty-hint">暂无项目，输入名称创建一个吧</p>';
             return;
         }
+
         result.projects.forEach(project => {
             const card = document.createElement('div');
             card.className = `project-card ${project.name === currentProject ? 'active' : ''}`;
@@ -121,13 +165,15 @@ async function loadProjects() {
             `;
 
             card.onclick = (e) => {
-                // 不触发回收站按钮的 click
                 if (e.target.closest('.btn-trash')) return;
                 selectProject(project.name);
             };
             list.appendChild(card);
         });
-    } catch (error) { console.error('加载项目失败:', error); }
+    } catch (error) {
+        console.error('加载项目失败:', error);
+        document.getElementById('projectList').innerHTML = '<p class="empty-hint">加载失败，请刷新重试</p>';
+    }
 }
 
 async function deleteProject(event, name) {
@@ -142,46 +188,49 @@ async function deleteProject(event, name) {
         }
         showSuccess(`项目 "${name}" 已删除`);
         loadProjects();
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 async function selectProject(name) {
     currentProject = name;
+    currentStage = 1;
     stage4Skipped = false;
+    stageCompletion = {};
+    uploadedAssets = { characters: null, scenes: null, props: null };
+    uploadedScriptContent = null;
+
     showLoading('加载项目...');
     try {
         const status = await apiCall(`/api/project/${name}/status`);
         showWorkflowView(name);
-        updateStatus(status);
+
+        // 根据已完成阶段设置 stageCompletion
+        if (status.stage1_complete) stageCompletion[1] = true;
+        if (status.stage2_complete) stageCompletion[2] = true;
+        if (status.stage3_complete) stageCompletion[3] = true;
+        if (status.stage4_complete) stageCompletion[4] = true;
+        if (status.stage5_complete) stageCompletion[5] = true;
+
+        // 跳到当前进行中的阶段
+        let nextStage = 1;
+        if (status.stage1_complete && status.stage2_complete && status.stage3_complete && status.stage5_complete) {
+            nextStage = 5;
+        } else if (status.stage1_complete && status.stage2_complete && status.stage3_complete && status.stage4_complete) {
+            nextStage = 5;
+        } else if (status.stage1_complete && status.stage2_complete && status.stage3_complete) {
+            nextStage = 4;
+        } else if (status.stage1_complete && status.stage2_complete) {
+            nextStage = 3;
+        } else if (status.stage1_complete) {
+            nextStage = 2;
+        }
+
+        switchStage(nextStage);
         loadProjects();
-        log(`切换到: ${name}`);
-    } finally { hideLoading(); }
-}
-
-function updateStatus(status) {
-    const display = document.getElementById('statusDisplay');
-    const stages = [
-        { key: 'stage1_complete', label: '剧本', stageId: 'stage1', statusText: status.stage1_complete ? '完成' : '待完成' },
-        { key: 'stage2_complete', label: '分镜脚本', stageId: 'stage2', statusText: status.stage2_complete ? '完成' : '待完成' },
-        { key: 'stage3_complete', label: '资产', stageId: 'stage3', statusText: status.stage3_complete ? `完成 (${status.stage3_images_count}张)` : '待完成' },
-        { key: 'stage4_complete', label: '分镜', stageId: 'stage4', statusText: stage4Skipped ? '已跳过' : (status.stage4_complete ? '完成' : '待完成') },
-        { key: 'stage5_complete', label: '成片', stageId: 'stage5', statusText: status.stage5_complete ? '完成' : '待完成' },
-    ];
-
-    display.innerHTML = stages.map((s, i) => {
-        let cssClass = 'pending';
-        if (s.statusText === '完成' || s.statusText.startsWith('完成')) cssClass = 'completed';
-        else if (s.statusText === '已跳过') cssClass = 'pending';
-        return `<div class="status-item ${cssClass}" onclick="scrollToStage('${s.stageId}')">
-            <label>${s.label}</label>
-            <span class="stage-status">${s.statusText}</span>
-        </div>`;
-    }).join('');
-}
-
-function scrollToStage(stageId) {
-    const el = document.getElementById(stageId);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showSuccess(`已加载: ${name}`);
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 // ========== 阶段一：剧本 ==========
@@ -194,7 +243,6 @@ function handleScriptUpload(input) {
     reader.onload = function(e) {
         uploadedScriptContent = e.target.result;
         document.getElementById('ideaInput').value = uploadedScriptContent;
-        log(`已上传剧本文件: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
     };
     reader.readAsText(file);
 }
@@ -211,14 +259,15 @@ async function generateScript() {
     showLoading('正在生成剧本...');
     try {
         const result = await apiCall(`/api/project/${currentProject}/stage1/generate`, 'POST', {
-            idea, style, provider,
-            uploaded_content: uploadedScriptContent
+            idea, style, provider, uploaded_content: uploadedScriptContent
         });
         document.getElementById('scriptDisplay').textContent = result.script;
         document.getElementById('scriptRevision').style.display = 'block';
-        updateStatus(result.status);
+        stageCompletion[1] = true;
+        updateProgressBar();
         showSuccess('剧本生成成功!');
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 async function reviseScript() {
@@ -230,9 +279,9 @@ async function reviseScript() {
         const result = await apiCall(`/api/project/${currentProject}/stage1/revise`, 'POST', { feedback });
         document.getElementById('scriptDisplay').textContent = result.script;
         document.getElementById('scriptFeedback').value = '';
-        updateStatus(result.status);
         showSuccess('剧本修改成功!');
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 // ========== 阶段二：分镜脚本 ==========
@@ -247,9 +296,11 @@ async function generateStoryboard() {
         const result = await apiCall(`/api/project/${currentProject}/stage2/generate`, 'POST', { style, provider });
         displayStoryboard(result.storyboard);
         document.getElementById('storyboardRevision').style.display = 'block';
-        updateStatus(result.status);
+        stageCompletion[2] = true;
+        updateProgressBar();
         showSuccess('分镜脚本生成成功!');
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 async function reviseStoryboard() {
@@ -261,9 +312,9 @@ async function reviseStoryboard() {
         const result = await apiCall(`/api/project/${currentProject}/stage2/revise`, 'POST', { feedback });
         displayStoryboard(result.storyboard);
         document.getElementById('storyboardFeedback').value = '';
-        updateStatus(result.status);
         showSuccess('分镜脚本修改成功!');
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 function displayStoryboard(storyboard) {
@@ -283,8 +334,13 @@ function displayStoryboard(storyboard) {
 function switchAssetTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.asset-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
     document.getElementById(`${tab}-tab`).classList.add('active');
+    // 找到被点击的按钮
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.textContent.trim() === ({characters:'角色',scenes:'场景',props:'道具'}[tab])) {
+            b.classList.add('active');
+        }
+    });
 }
 
 function handleAssetUpload(type, input) {
@@ -299,7 +355,6 @@ function handleAssetUpload(type, input) {
         div.className = 'result-item success';
         div.innerHTML = `<img src="${e.target.result}" alt="uploaded"><p>上传: ${file.name}</p>`;
         container.prepend(div);
-        log(`已上传${type === 'characters' ? '角色' : type === 'scenes' ? '场景' : '道具'}图片: ${file.name}`);
     };
     reader.readAsDataURL(file);
 }
@@ -319,9 +374,11 @@ async function generateAssets(type) {
     try {
         const result = await apiCall(`/api/project/${currentProject}/stage3/generate`, 'POST', payload);
         displayAssetResults(result.results);
-        updateStatus(result.status);
+        stageCompletion[3] = true;
+        updateProgressBar();
         showSuccess(`${typeName}生成成功!`);
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 function displayAssetResults(results) {
@@ -339,13 +396,14 @@ function displayAssetResults(results) {
     });
 }
 
-// ========== 阶段四：分镜（可选） ==========
+// ========== 阶段四：分镜画面 ==========
 
 function skipStage4() {
     stage4Skipped = true;
-    log('已跳过阶段四：分镜');
-    showSuccess('已跳过分镜阶段，可继续制作成片');
-    apiCall(`/api/project/${currentProject}/status`).then(r => updateStatus(r));
+    stageCompletion[4] = true;
+    updateProgressBar();
+    showSuccess('已跳过分镜阶段');
+    switchStage(5);
 }
 
 async function generateVisualStoryboard() {
@@ -355,23 +413,18 @@ async function generateVisualStoryboard() {
     try {
         const result = await apiCall(`/api/project/${currentProject}/stage4/generate`, 'POST', {});
         document.getElementById('visualStoryboardDisplay').textContent = JSON.stringify(result, null, 2);
-        updateStatus(result.status);
+        stageCompletion[4] = true;
+        updateProgressBar();
         showSuccess('分镜画面生成成功!');
-    } finally { hideLoading(); }
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 // ========== 阶段五：制作成片 ==========
 
 function toggleAudioOptions() {
     const videoProvider = document.getElementById('videoProvider').value;
-    const hint = document.getElementById('seedanceHint');
-    const skipAudio = document.getElementById('skipAudio');
-    if (videoProvider === 'seedance-2.0') {
-        hint.style.display = 'block';
-        skipAudio.parentElement.style.display = 'flex';
-    } else {
-        hint.style.display = 'none';
-    }
+    document.getElementById('seedanceHint').style.display = videoProvider === 'seedance-2.0' ? 'block' : 'none';
 }
 
 function toggleAudioSelects() {
@@ -408,9 +461,8 @@ async function makeFilm() {
             use_images: useImages, provider: providers.video
         });
         const ok = videoResult.results.filter(r=>r.status==='success').length;
-        showSuccess(`视频: ${ok}/${videoResult.results.length} 完成`);
         progressDiv.innerHTML += '<p class="success">[1/3] 视频生成完毕!</p>';
-        updateStatus(videoResult.status);
+        showSuccess(`视频: ${ok}/${videoResult.results.length} 完成`);
     } catch(e) {
         progressDiv.innerHTML += `<p class="error">[1/3] 失败: ${e.message}</p>`;
         hideLoading(); return;
@@ -421,12 +473,10 @@ async function makeFilm() {
         showLoading('步骤 2/3: 正在生成音频...');
         progressDiv.innerHTML += '<p>[2/3] 正在生成音频 (配音+音乐+音效)...</p>';
         try {
-            const audioResult = await apiCall(`/api/project/${currentProject}/stage5b/generate`, 'POST', {
+            await apiCall(`/api/project/${currentProject}/stage5b/generate`, 'POST', {
                 tts_provider: providers.tts, music_provider: providers.music, sfx_provider: providers.sfx
             });
-            showSuccess('音频生成完毕!');
             progressDiv.innerHTML += '<p class="success">[2/3] 音频生成完毕!</p>';
-            updateStatus(audioResult.status);
         } catch(e) {
             progressDiv.innerHTML += `<p class="error">[2/3] 失败: ${e.message}</p>`;
             progressDiv.innerHTML += '<p>音频失败，继续合成视频...</p>';
@@ -444,11 +494,12 @@ async function makeFilm() {
         });
         const container = document.getElementById('finalResult');
         const filename = finalResult.final_video.split('\\').pop().split('/').pop();
-        container.innerHTML = `<h3>成片完成!</h3>
+        container.innerHTML = `<h3>🎉 成片完成!</h3>
             <video controls width="100%">
                 <source src="/api/project/${currentProject}/files/${filename}" type="video/mp4">
             </video><p>${finalResult.final_video}</p>`;
-        updateStatus(finalResult.status);
+        stageCompletion[5] = true;
+        updateProgressBar();
         progressDiv.innerHTML += '<p class="success">[3/3] 成片制作完成!</p>';
         showSuccess('最终成片已就绪!');
     } catch(e) {
@@ -460,8 +511,6 @@ async function makeFilm() {
 // ========== 初始化 ==========
 
 document.addEventListener('DOMContentLoaded', () => {
-    log('AI 影片工作流已就绪');
-    log('请创建或选择一个项目开始');
     loadProjects();
     toggleAudioOptions();
 });
