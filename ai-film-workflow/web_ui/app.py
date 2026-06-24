@@ -19,6 +19,12 @@ from workflow import AIFilmWorkflow
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
+
+# 数据目录（与 workflow.py 保持一致）
+DATA_ROOT = Path(os.environ.get("DATA_DIR", "data"))
+PROJECTS_DIR = DATA_ROOT / "projects"
+PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+
 active_workflows = {}
 
 def _get_workflow(name):
@@ -32,17 +38,18 @@ def index():
 
 @app.route('/api/projects', methods=['GET'])
 def list_projects():
-    projects_dir = Path("projects")
-    if not projects_dir.exists():
-        return jsonify({"projects": []})
+    if not PROJECTS_DIR.exists():
+        PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
     projects = []
-    for p in projects_dir.iterdir():
+    for p in PROJECTS_DIR.iterdir():
         if p.is_dir():
             sf = p / "workflow_state.json"
+            current_stage = "stage1"
             if sf.exists():
                 with open(sf, 'r', encoding='utf-8') as f:
                     s = json.load(f)
-                projects.append({"name": p.name, "current_stage": s.get("current_stage")})
+                current_stage = s.get("current_stage", "stage1")
+            projects.append({"name": p.name, "current_stage": current_stage})
     return jsonify({"projects": projects})
 
 @app.route('/api/project/create', methods=['POST'])
@@ -59,7 +66,7 @@ def get_status(name):
 @app.route('/api/project/<name>', methods=['DELETE'])
 def delete_project(name):
     import shutil
-    project_dir = Path("projects") / name
+    project_dir = PROJECTS_DIR / name
     if project_dir.exists():
         shutil.rmtree(project_dir)
     if name in active_workflows:
@@ -170,7 +177,7 @@ def stage5c_compose(name):
 
 @app.route('/api/project/<name>/files/<path:filename>')
 def serve_file(name, filename):
-    fp = Path("projects") / name / filename
+    fp = PROJECTS_DIR / name / filename
     if fp.exists(): return send_file(fp)
     return jsonify({"error": "not found"}), 404
 

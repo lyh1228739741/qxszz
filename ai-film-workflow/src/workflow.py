@@ -29,10 +29,14 @@ from stages.stage6_edit import VideoEditor
 
 class AIFilmWorkflow:
     """AI 影片生成工作流"""
-    
+
+    # 数据目录（环境变量配置，默认 ./data，Railway 上挂载 Volume 到 /data）
+    DATA_ROOT = Path(os.environ.get("DATA_DIR", "data"))
+    PROJECTS_ROOT = DATA_ROOT / "projects"
+
     def __init__(self, project_name: str):
         self.project_name = project_name
-        self.project_dir = Path(f"projects/{project_name}")
+        self.project_dir = self.PROJECTS_ROOT / project_name
         self.project_dir.mkdir(parents=True, exist_ok=True)
         
         # 状态文件
@@ -47,6 +51,10 @@ class AIFilmWorkflow:
         self.audio_gen = None
         self.editor = None
         
+        # 确保初始状态文件存在（修复项目列表不显示bug）
+        if not self.state_file.exists():
+            self._save_state()
+        
         print(f"[INFO] Workflow initialized: {project_name}")
     
     def _load_state(self) -> dict:
@@ -56,7 +64,7 @@ class AIFilmWorkflow:
                 return json.load(f)
         return {
             "project_name": self.project_name,
-            "current_stage": None,
+            "current_stage": "stage1",
             "stage1_script": None,
             "stage2_storyboard": None,
             "stage3_assets": [],
