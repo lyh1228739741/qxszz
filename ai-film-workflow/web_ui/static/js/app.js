@@ -581,7 +581,18 @@ async function sendChat() {
         chatHistory.push({ role: 'assistant', content: result.reply });
     } catch (e) {
         document.getElementById('typingBubble')?.remove();
-        addChatBubble('ai', '😅 出错了：' + e.message);
+        const msg = e.message;
+        if (msg.includes('429') || msg.includes('限流') || msg.includes('Too Many')) {
+            addChatBubble('ai', '⏳ 请求太频繁了，等10秒后自动重试...');
+            chatHistory.pop();  // 移除刚才的用户消息
+            setTimeout(() => {
+                document.getElementById('chatInput').value = message;
+                sendChat();
+            }, 10000);
+            input.disabled = false;
+            return;
+        }
+        addChatBubble('ai', '😅 出错了：' + msg);
     }
 
     input.disabled = false;

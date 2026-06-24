@@ -228,7 +228,10 @@ def chat():
         reply = result['choices'][0]['message']['content']
         return jsonify({"success": True, "reply": reply})
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        err = str(e)
+        if '429' in err or 'Too Many' in err:
+            return jsonify({"success": False, "error": "Kimi API 限流了，请等10秒再发消息"}), 429
+        return jsonify({"success": False, "error": err}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
