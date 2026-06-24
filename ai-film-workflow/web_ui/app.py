@@ -230,7 +230,7 @@ def chat():
         model = 'moonshot-v1-8k'
 
     if not api_key:
-        return jsonify({"success": False, "error": f"{provider.upper()}_API_KEY not configured"}), 500
+        return jsonify({"success": False, "error": f"未配置 {provider.upper()}_API_KEY，请在 Railway Variables 中添加"}), 500
 
     # 构建请求
     payload = {
@@ -256,6 +256,9 @@ def chat():
         result = resp.json()
         reply = result['choices'][0]['message']['content']
         return jsonify({"success": True, "reply": reply})
+    except req.exceptions.HTTPError as e:
+        err_msg = f"API错误({resp.status_code}): {resp.text[:200]}"
+        return jsonify({"success": False, "error": err_msg}), 500
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

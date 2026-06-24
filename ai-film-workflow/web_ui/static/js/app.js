@@ -581,7 +581,7 @@ async function sendChat() {
         chatHistory.push({ role: 'assistant', content: result.reply });
     } catch (e) {
         document.getElementById('typingBubble')?.remove();
-        addChatBubble('ai', '😅 抱歉，我暂时无法回复，请稍后再试...');
+        addChatBubble('ai', '😅 出错了：' + e.message);
     }
 
     input.disabled = false;
