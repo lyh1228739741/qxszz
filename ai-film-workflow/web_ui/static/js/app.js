@@ -292,6 +292,8 @@ function handleScriptUpload(input) {
     const name = file.name.toLowerCase();
     document.getElementById('scriptUploadName').textContent = file.name;
     document.getElementById('btnRemoveScript').style.display = 'inline-block';
+    document.getElementById('btnSkipScript').style.display = 'inline-block';
+    document.getElementById('btnGenerateScript').textContent = '重新生成剧本';
     
     const setContent = (text) => {
         uploadedScriptContent = text;
@@ -339,8 +341,27 @@ function removeScriptUpload() {
     uploadedScriptContent = null;
     document.getElementById('scriptUploadName').textContent = '';
     document.getElementById('btnRemoveScript').style.display = 'none';
+    document.getElementById('btnSkipScript').style.display = 'none';
+    document.getElementById('btnGenerateScript').textContent = '生成剧本';
     document.getElementById('scriptFileUpload').value = '';
     document.getElementById('ideaInput').value = '';
+}
+
+async function skipScriptGeneration() {
+    if (!currentProject) { showError('请先选择项目'); return; }
+    if (!uploadedScriptContent) { showError('请先上传剧本文件'); return; }
+    
+    showLoading('保存剧本中...');
+    try {
+        const result = await apiCall(`/api/project/${currentProject}/stage1/skip`, 'POST', {
+            content: uploadedScriptContent
+        });
+        stageCompletion[1] = true;
+        updateProgressBar();
+        showSuccess('剧本已保存，进入阶段二');
+        switchStage(2);
+    } catch (e) { showError(e.message); }
+    finally { hideLoading(); }
 }
 
 async function generateScript() {

@@ -99,7 +99,8 @@
                     <option value="kimi">Kimi</option>
                     <option value="deepseek">DeepSeek</option>
                 </select>
-                <button onclick="generateScript()" class="btn-primary">生成剧本</button>
+                <button onclick="generateScript()" class="btn-primary" id="btnGenerateScript">生成剧本</button>
+                <button onclick="skipScriptGeneration()" class="btn-skip" id="btnSkipScript" style="display:none">跳过生成，直接使用上传的剧本 →</button>
                 <div id="scriptDisplay" class="display-area"></div>
                 <div id="scriptRevision" class="revision-area" style="display:none;">
                     <textarea id="scriptFeedback" placeholder="输入修改意见..." rows="3"></textarea>

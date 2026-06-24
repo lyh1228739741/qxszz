@@ -97,6 +97,22 @@ def delete_project(name):
 
 # ===== Stage 1: Script =====
 
+@app.route('/api/project/<name>/stage1/skip', methods=['POST'])
+def stage1_skip(name):
+    """跳过AI生成，直接使用上传的剧本"""
+    data = request.json or {}
+    content = data.get('content', '')
+    if not content.strip():
+        return jsonify({"success": False, "error": "没有上传剧本内容"}), 400
+    wf = _get_workflow(name)
+    script_file = wf.project_dir / "script_v1_uploaded.txt"
+    with open(script_file, 'w', encoding='utf-8') as f:
+        f.write(content)
+    wf.state['current_stage'] = "stage1"
+    wf.state['stage1_script'] = str(script_file)
+    wf._save_state()
+    return jsonify({"success": True, "script": content, "status": wf.get_status()})
+
 @app.route('/api/project/<name>/stage1/generate', methods=['POST'])
 def stage1_gen(name):
     data = request.json or {}
