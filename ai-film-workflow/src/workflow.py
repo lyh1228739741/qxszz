@@ -219,7 +219,7 @@ class AIFilmWorkflow:
     
     # ========== 阶段3：图像生成 ==========
     
-    def stage3_generate_assets(self, asset_type: str = "shots", selected_shots: list = None, style_prompt: str = "") -> list:
+    def stage3_generate_assets(self, asset_type: str = "shots", selected_shots: list = None, style_prompt: str = "", resolution: str = "2k", ratio: str = "16:9") -> list:
         """阶段3：生成资产（角色/场景/道具/镜头）"""
         if not self.state["stage2_storyboard"]:
             raise ValueError("Please complete Stage 2 first")
@@ -231,7 +231,7 @@ class AIFilmWorkflow:
         with open(self.state["stage2_storyboard"], 'r', encoding='utf-8') as f:
             storyboard = json.load(f)
         
-        self.image_gen = ImageGenerator(style_prompt=style_prompt)
+        self.image_gen = ImageGenerator(style_prompt=style_prompt, resolution=resolution, ratio=ratio)
         
         results = []
         

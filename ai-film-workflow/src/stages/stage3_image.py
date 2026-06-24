@@ -17,27 +17,46 @@ from config.api_config import GPT_IMAGE_API_KEY, GPT_IMAGE_BASE_URL
 
 
 class ImageGenerator:
-    def __init__(self, style_prompt: str = ""):
+    # 尺寸映射
+    RATIO_TO_SIZE = {
+        '1:1': '1024x1024', '3:2': '1536x1024', '2:3': '1024x1536',
+        '4:3': '1536x1152', '3:4': '1152x1536', '9:16': '1152x2048',
+        '16:9': '2048x1152', '21:9': '2520x1080', '4:5': '1024x1280'
+    }
+    RES_TO_SCALE = {'1k': 1, '2k': 1.5, '4k': 2}
+
+    def __init__(self, style_prompt: str = "", resolution: str = "2k", ratio: str = "16:9"):
         self.client = BaseAPIClient(GPT_IMAGE_API_KEY, GPT_IMAGE_BASE_URL)
         self.output_dir = Path("output/images")
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.style_prompt = style_prompt
+        self.resolution = resolution
+        self.ratio = ratio
+    
+    def _get_size(self) -> str:
+        base = self.RATIO_TO_SIZE.get(self.ratio, '1024x1024')
+        scale = self.RES_TO_SCALE.get(self.resolution, 1)
+        if scale == 1:
+            return base
+        w, h = base.split('x')
+        return f"{int(int(w)*scale)}x{int(int(h)*scale)}"
     
     def _apply_style(self, prompt: str) -> str:
         if self.style_prompt:
             return f"{prompt}\n\nStyle requirements: {self.style_prompt}"
         return prompt
     
-    def generate(self, prompt: str, shot_id: str, size: str = "1024x1024", 
+    def generate(self, prompt: str, shot_id: str, size: str = None, 
                  quality: str = "hd", style: str = "vivid") -> str:
         print(f"[Stage 3] Generating image [{shot_id}]...")
         final_prompt = self._apply_style(prompt)
+        img_size = size or self._get_size()
         
         payload = {
             "model": "gpt-image-2",
             "prompt": final_prompt,
             "n": 1,
-            "size": size,
+            "size": img_size,
             "quality": quality,
             "style": style,
             "response_format": "b64_json"

@@ -323,6 +323,33 @@ function displayStoryboard(storyboard) {
 
 // ========== 阶段三：资产 ==========
 
+// 模型 → 分辨率/尺寸 配置
+const modelOptions = {
+    'gpt-image-2': {
+        resolutions: ['1k', '2k', '4k'],
+        ratios: ['1:1', '3:2', '2:3', '4:3', '3:4', '9:16', '16:9']
+    },
+    'nano-banana': {
+        resolutions: ['1k', '2k', '4k'],
+        ratios: ['21:9', '16:9', '3:2', '4:3', '1:1', '4:5', '3:4', '2:3', '9:16']
+    },
+    'seedream-5': {
+        resolutions: ['2k', '4k'],
+        ratios: ['16:9', '4:3', '1:1', '3:4', '9:16', '2:3', '3:2', '21:9']
+    }
+};
+
+function updateModelOptions() {
+    const model = document.getElementById('imageProvider').value;
+    const opts = modelOptions[model] || modelOptions['gpt-image-2'];
+    
+    const resSelect = document.getElementById('imageResolution');
+    resSelect.innerHTML = opts.resolutions.map(r => `<option value="${r}">${r.toUpperCase()}</option>`).join('');
+    
+    const ratioSelect = document.getElementById('imageRatio');
+    ratioSelect.innerHTML = opts.ratios.map(r => `<option value="${r}">${r}</option>`).join('');
+}
+
 function switchAssetTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.asset-tab').forEach(t => t.classList.remove('active'));
@@ -380,8 +407,10 @@ async function generateAssets(type) {
     const typeName = typeNames[type] || type;
     const provider = document.getElementById('imageProvider').value;
     const stylePrompt = document.getElementById('stylePromptCustom').value.trim();
+    const resolution = document.getElementById('imageResolution')?.value || '2k';
+    const ratio = document.getElementById('imageRatio')?.value || '16:9';
 
-    const payload = { asset_type: type, provider, style_prompt: stylePrompt };
+    const payload = { asset_type: type, provider, style_prompt: stylePrompt, resolution, ratio };
     if (uploadedAssets[type]) {
         payload.uploaded_image = uploadedAssets[type].data;
     }
@@ -527,12 +556,37 @@ async function makeFilm() {
 // ========== 对话 ==========
 
 let chatHistory = [];
+const CHAT_STORAGE_KEY = 'ai_film_chat_history';
 
-function addChatBubble(role, content) {
+function saveChatHistory() {
+    try { localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory)); } catch(e) {}
+}
+
+function loadChatHistory() {
+    try {
+        const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+        if (saved) {
+            chatHistory = JSON.parse(saved);
+            chatHistory.forEach(msg => addChatBubble(msg.role, msg.content, false));
+        }
+    } catch(e) { chatHistory = []; }
+}
+
+function clearChatHistory() {
+    if (!confirm('确定要清空所有聊天记录吗？')) return;
+    chatHistory = [];
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    document.getElementById('chatMessages').innerHTML = `
+        <div class="chat-bubble ai">
+            <div class="chat-avatar">🤖</div>
+            <div class="chat-content">嗨！我是璐子秦，你的AI影片助手 🎬<br>跟我说说你想做什么样的影片吧！</div>
+        </div>`;
+}
+
+function addChatBubble(role, content, save = true) {
     const container = document.getElementById('chatMessages');
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${role}`;
-    // 转换链接为可点击
     const html = content
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\n/g, '<br>');
@@ -542,6 +596,7 @@ function addChatBubble(role, content) {
     `;
     container.appendChild(bubble);
     container.scrollTop = container.scrollHeight;
+    if (save && role !== 'user') saveChatHistory();
 }
 
 function quickChat(text) {
@@ -559,6 +614,7 @@ async function sendChat() {
 
     addChatBubble('user', message);
     chatHistory.push({ role: 'user', content: message });
+    saveChatHistory();
 
     // 显示 typing 指示器
     const typingBubble = document.createElement('div');
@@ -602,6 +658,8 @@ async function sendChat() {
 // ========== 初始化 ==========
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadChatHistory();
     loadProjects();
     toggleAudioOptions();
+    updateModelOptions();
 });

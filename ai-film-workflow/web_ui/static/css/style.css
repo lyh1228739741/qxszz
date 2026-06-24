@@ -14,6 +14,15 @@ body {
 
 .chat-section { padding-bottom: 15px; }
 
+.chat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+.chat-header h2 { margin: 0 !important; }
+.chat-trash { font-size: 1.2em; opacity: 0.4; margin: 0; }
+.chat-trash:hover { opacity: 1; }
+
+.model-options-row { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+.model-option { flex: 1; min-width: 120px; }
+.model-option .select-label { margin-top: 0; }
+
 .chat-messages {
     max-height: 400px; overflow-y: auto; margin-bottom: 15px;
     display: flex; flex-direction: column; gap: 12px;

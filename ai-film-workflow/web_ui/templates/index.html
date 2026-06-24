@@ -18,7 +18,10 @@
 
             <!-- 对话面板 -->
             <section class="chat-section">
-                <h2>💬 AI 助手</h2>
+                <div class="chat-header">
+                    <h2>💬 AI 助手</h2>
+                    <button class="btn-trash chat-trash" title="清空聊天记录" onclick="clearChatHistory()">🗑️</button>
+                </div>
                 <div class="chat-messages" id="chatMessages">
                     <div class="chat-bubble ai">
                         <div class="chat-avatar">🤖</div>
@@ -154,11 +157,28 @@
                     <button class="tab-btn" onclick="switchAssetTab('props')">道具</button>
                 </div>
                 <label class="select-label">模型选择</label>
-                <select id="imageProvider">
+                <select id="imageProvider" onchange="updateModelOptions()">
                     <option value="gpt-image-2">GPT-image-2</option>
-                    <option value="placeholder1">（备选图像 API 1）</option>
-                    <option value="placeholder2">（备选图像 API 2）</option>
+                    <option value="nano-banana">Nano Banana</option>
+                    <option value="seedream-5">Seedream 5</option>
                 </select>
+                <div class="model-options-row">
+                    <div class="model-option">
+                        <label class="select-label">清晰度</label>
+                        <select id="imageResolution">
+                            <option value="1k">1K</option>
+                            <option value="2k">2K</option>
+                        </select>
+                    </div>
+                    <div class="model-option">
+                        <label class="select-label">尺寸</label>
+                        <select id="imageRatio">
+                            <option value="1:1">1:1</option>
+                            <option value="16:9">16:9</option>
+                            <option value="9:16">9:16</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="assetContent" class="asset-content">
                     <div id="characters-tab" class="asset-tab active">
                         <div class="upload-row">

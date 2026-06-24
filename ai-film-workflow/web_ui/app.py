@@ -126,7 +126,13 @@ def stage3_gen(name):
     data = request.json or {}
     try:
         wf = _get_workflow(name)
-        results = wf.stage3_generate_assets(data.get('asset_type', 'shots'), data.get('shots'), data.get('style_prompt', ''))
+        results = wf.stage3_generate_assets(
+            data.get('asset_type', 'shots'),
+            data.get('shots'),
+            data.get('style_prompt', ''),
+            resolution=data.get('resolution', '2k'),
+            ratio=data.get('ratio', '16:9')
+        )
         return jsonify({"success": True, "results": results, "status": wf.get_status()})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
