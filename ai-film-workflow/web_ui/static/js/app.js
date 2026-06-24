@@ -19,9 +19,14 @@ function hideLoading() { document.getElementById('loading').style.display = 'non
 function showError(message) { alert('错误: ' + message); }
 function showSuccess(message) { /* silent success */ }
 
-async function apiCall(url, method = 'GET', data = null) {
+async function apiCall(url, method = 'GET', data = null, longTimeout = false) {
     const options = { method, headers: { 'Content-Type': 'application/json' } };
     if (data) options.body = JSON.stringify(data);
+    if (longTimeout) {
+        const controller = new AbortController();
+        options.signal = controller.signal;
+        setTimeout(() => controller.abort(), 180000); // 3分钟超时
+    }
     const response = await fetch(url, options);
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
@@ -321,7 +326,7 @@ async function generateScript() {
     try {
         const result = await apiCall(`/api/project/${currentProject}/stage1/generate`, 'POST', {
             idea, style: '', provider, uploaded_content: uploadedScriptContent
-        });
+        }, true);
         document.getElementById('scriptDisplay').textContent = result.script;
         document.getElementById('scriptRevision').style.display = 'block';
         stageCompletion[1] = true;
@@ -349,11 +354,19 @@ async function reviseScript() {
 
 async function generateStoryboard() {
     if (!currentProject) { showError('请先选择项目'); return; }
+    
+    // 检查阶段一是否完成
+    if (!stageCompletion[1]) {
+        showError('请先生成阶段一的剧本，再进入阶段二');
+        switchStage(1);
+        return;
+    }
+    
     const provider = document.getElementById('storyboardProvider').value;
 
-    showLoading('正在生成分镜脚本...');
+    showLoading('正在生成分镜脚本（可能需要30秒）...');
     try {
-        const result = await apiCall(`/api/project/${currentProject}/stage2/generate`, 'POST', { style: '', provider });
+        const result = await apiCall(`/api/project/${currentProject}/stage2/generate`, 'POST', { style: '', provider }, true);
         displayStoryboard(result.storyboard);
         document.getElementById('storyboardRevision').style.display = 'block';
         stageCompletion[2] = true;
@@ -488,6 +501,13 @@ function removeUploadedAsset(type, id) {
 
 async function generateAssets(type) {
     if (!currentProject) { showError('请先选择项目'); return; }
+    
+    if (!stageCompletion[2]) {
+        showError('请先生成阶段二的分镜脚本，再进入阶段三');
+        switchStage(2);
+        return;
+    }
+    
     const typeNames = { characters: '角色', scenes: '场景', props: '道具' };
     const typeName = typeNames[type] || type;
     const prefix = type === 'characters' ? 'char' : type === 'scenes' ? 'scene' : 'prop';
