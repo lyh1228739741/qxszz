@@ -137,15 +137,15 @@
                 <!-- 风格预设 -->
                 <label class="select-label">风格选择</label>
                 <div class="style-presets" id="stylePresets">
-                    <label class="style-check"><input type="radio" name="stylePreset" value="3d_guochao" onchange="updateStylePrompt()"> 3D国潮动漫</label>
-                    <label class="style-check"><input type="radio" name="stylePreset" value="ink_wash" onchange="updateStylePrompt()"> 中式水墨风格</label>
-                    <label class="style-check"><input type="radio" name="stylePreset" value="anime_cel" onchange="updateStylePrompt()"> 日式赛璐璐风格</label>
-                    <label class="style-check"><input type="radio" name="stylePreset" value="hyperreal" onchange="updateStylePrompt()"> 超写实风格</label>
-                    <label class="style-check"><input type="radio" name="stylePreset" value="pixel_art" onchange="updateStylePrompt()"> 像素风格</label>
-                    <label class="style-check"><input type="radio" name="stylePreset" value="2d_chibi" onchange="updateStylePrompt()"> 2DQ版风格</label>
-                    <label class="style-check"><input type="radio" name="stylePreset" value="noir_film" onchange="updateStylePrompt()"> 黑白电影风格</label>
-                    <label class="style-check"><input type="radio" name="stylePreset" value="handdrawn" onchange="updateStylePrompt()"> 手绘风格</label>
-                    <label class="style-check style-clear"><input type="radio" name="stylePreset" value="" onchange="updateStylePrompt()" checked> 无风格</label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="3d_guochao" onchange="updateStylePrompt()"><span>🎮 3D国潮动漫</span></label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="ink_wash" onchange="updateStylePrompt()"><span>🖌️ 中式水墨风格</span></label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="anime_cel" onchange="updateStylePrompt()"><span>🎌 日式赛璐璐</span></label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="hyperreal" onchange="updateStylePrompt()"><span>📸 超写实风格</span></label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="pixel_art" onchange="updateStylePrompt()"><span>👾 像素风格</span></label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="2d_chibi" onchange="updateStylePrompt()"><span>🎀 2DQ版风格</span></label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="noir_film" onchange="updateStylePrompt()"><span>🎞️ 黑白电影风格</span></label>
+                    <label class="style-card"><input type="radio" name="stylePreset" value="handdrawn" onchange="updateStylePrompt()"><span>✏️ 手绘风格</span></label>
+                    <label class="style-card style-none"><input type="radio" name="stylePreset" value="" onchange="updateStylePrompt()" checked><span>⬜ 无风格</span></label>
                 </div>
                 <textarea id="stylePromptCustom" placeholder="选择风格后，风格描述会出现在这里。你也可以自由编辑..." rows="4" onchange="updateStylePrompt()"></textarea>
 
@@ -223,7 +223,7 @@
                 <h2>🖼️ 阶段四：分镜画面 <span class="optional-tag">可跳过</span></h2>
                 <p class="stage-desc">将生成的资产与分镜脚本结合，生成带画面的分镜板。如果不需要可跳过。</p>
                 <div class="skip-row">
-                    <button onclick="skipStage4()" class="btn-skip">跳过此阶段</button>
+                    <button onclick="skipStage4()" class="btn-skip" id="btnSkipStage4">跳过此阶段</button>
                     <button onclick="generateVisualStoryboard()" class="btn-primary">生成分镜画面</button>
                 </div>
                 <div id="visualStoryboardDisplay" class="display-area"></div>

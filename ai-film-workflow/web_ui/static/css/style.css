@@ -280,19 +280,36 @@ select option { background: #1a1a2e; color: #eee; }
 }
 .revision-area { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
 
-/* 风格预设 */
+/* 风格预设 - 卡片式 */
 .style-presets {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
-    gap: 10px; margin-bottom: 12px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+    gap: 8px; margin-bottom: 12px;
 }
-.style-check {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.06); padding: 8px 12px;
-    border-radius: 8px; cursor: pointer; transition: all 0.2s;
-    border: 1px solid rgba(255,255,255,0.08); font-size: 0.9em;
+.style-card {
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04); padding: 12px 8px;
+    border-radius: 10px; cursor: pointer; transition: all 0.25s;
+    border: 2px solid rgba(255,255,255,0.06); text-align: center;
+    font-size: 0.85em; color: #aaa; position: relative;
 }
-.style-check:hover { background: rgba(233,69,96,0.15); border-color: rgba(233,69,96,0.3); }
-.style-check input[type="checkbox"] { width: auto; margin: 0; accent-color: #e94560; }
+.style-card:hover {
+    border-color: rgba(233,69,96,0.3);
+    background: rgba(233,69,96,0.08);
+    color: #eee; transform: translateY(-1px);
+}
+.style-card input[type="radio"] { display: none; }
+.style-card:has(input:checked) {
+    border-color: #e94560;
+    background: rgba(233,69,96,0.15);
+    color: #fff; box-shadow: 0 0 12px rgba(233,69,96,0.2);
+    font-weight: bold;
+}
+.style-card:has(input:checked)::after {
+    content: '✓'; position: absolute; top: 4px; right: 8px;
+    font-size: 0.75em; color: #e94560; font-weight: bold;
+}
+.style-card.style-none { opacity: 0.5; }
+.style-card.style-none:hover { opacity: 0.8; }
 
 /* 资产 tabs */
 .asset-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
@@ -351,14 +368,14 @@ label input[type="checkbox"] { width: auto; }
 }
 
 
-/* ʱ������ */
+/* ʱ������ */
 .video-options { margin: 10px 0; }
 .duration-slider-row { display: flex; align-items: center; gap: 14px; margin: 8px 0 16px; }
 .duration-slider-row input[type='range'] { flex: 1; margin: 0; accent-color: #e94560; height: 6px; }
 .duration-label { color: #e94560; font-weight: bold; font-size: 1.1em; min-width: 40px; text-align: right; }
 
 
-/* �ο�ͼ�� */
+/* �ο�ͼ�� */
 .ref-image-section { margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 10px; }
 .ref-preview { margin-top: 10px; }
 .ref-preview img { max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); }
@@ -366,7 +383,7 @@ label input[type="checkbox"] { width: auto; }
 .style-clear:hover { opacity: 1; }
 
 
-/* ͼƬɾ����ť */
+/* ͼƬɾ����ť */
 .uploaded-item { position: relative; }
 .btn-img-delete {
     position: absolute; top: 4px; right: 4px; z-index: 5;
@@ -380,18 +397,18 @@ label input[type="checkbox"] { width: auto; }
 .btn-img-delete.inline { position: static; width: auto; height: auto; border-radius: 4px; padding: 2px 8px; font-size: 16px; background: transparent; color: #e94560; font-weight: bold; }
 .btn-img-delete.inline:hover { background: rgba(233,69,96,0.2); }
 
-/* �ο�ͼƬ */\n.ref-img-item { position: relative; display: inline-block; margin: 6px; }
+/* �ο�ͼƬ */\n.ref-img-item { position: relative; display: inline-block; margin: 6px; }
 .ref-img-item img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); }
 .ref-img-item span { display: block; font-size: 0.75em; color: #888; text-align: center; margin-top: 2px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 
-/* ǰһ�׶γɹ�չʾ */
+/* ǰһ�׶γɹ�չʾ */
 .prev-stage-content { margin-bottom: 20px; padding: 16px; background: rgba(78,204,163,0.06); border-radius: 10px; border: 1px solid rgba(78,204,163,0.15); }
 .prev-stage-content h3 { color: #4ecca3 !important; background: none !important; padding: 0 !important; margin-bottom: 10px !important; font-size: 1em !important; }
 .prev-stage-content .display-area { max-height: 300px; font-size: 0.88em; }
 
 
-/* ��ȡ�б� */
+/* ��ȡ�б� */
 .extract-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; }
 .extract-col strong { display: block; margin-bottom: 4px; font-size: 0.9em; color: #e94560; }
 .extract-col textarea { font-size: 0.85em; min-height: 80px; }

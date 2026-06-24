@@ -97,6 +97,13 @@ function switchStage(stage) {
     // 加载上一阶段成果
     if (stage >= 2 && currentProject) loadPrevStageContent(stage);
 
+    // 阶段4：更新跳过按钮文字
+    if (stage === 4) {
+        const btn = document.getElementById('btnSkipStage4');
+        btn.textContent = stage4Skipped ? '取消跳过，正常使用阶段四' : '跳过此阶段';
+        btn.className = stage4Skipped ? 'btn-primary' : 'btn-skip';
+    }
+
     // 阶段5：如果跳过阶段4，隐藏参考图像选项
     if (stage === 5) {
         const useImagesLabel = document.getElementById('useImagesLabel');
@@ -719,12 +726,18 @@ function displayAssetResults(results, type) {
 // ========== 阶段四：分镜画面 ==========
 
 function skipStage4() {
+    if (stage4Skipped) {
+        // 取消跳过
+        stage4Skipped = false;
+        stageCompletion[4] = false;
+        updateProgressBar();
+        showSuccess('已取消跳过，现在可以正常使用阶段四');
+        return;
+    }
     stage4Skipped = true;
     stageCompletion[4] = true;
-    document.getElementById('stagePanel4').style.display = 'none';
-    document.getElementById('visualStoryboardDisplay').textContent = '';
     updateProgressBar();
-    showSuccess('已跳过分镜阶段');
+    showSuccess('已跳过分镜阶段，可在阶段四取消');
     currentStage = 5;
     switchStage(5);
 }
