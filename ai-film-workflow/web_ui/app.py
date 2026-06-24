@@ -189,9 +189,9 @@ def serve_output(filename):
 
 # ===== Chat API =====
 
-import requests as req
-
 CHAT_SYSTEM_PROMPT = """你是璐子秦，AI影片助手。帮用户从零做AI影片。功能：1剧本 2分镜 3资产(8风格) 4画面 5成片。回复友好简短，主动引导。"""
+
+from utils.base_api import BaseAPIClient
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -213,29 +213,24 @@ def chat():
         model = 'deepseek-chat'
 
     if not api_key or len(api_key) < 10:
-        return jsonify({"success": False, "error": f"{provider.upper()}_API_KEY 未配置或无效，请在 Railway Variables 中设置"}), 500
+        return jsonify({"success": False, "error": f"{provider.upper()}_API_KEY 未配置"}), 500
 
     try:
-        resp = req.post(
-            f"{base_url}/chat/completions",
-            json={
+        client = BaseAPIClient(api_key, base_url)
+        result = client.post(
+            "chat/completions",
+            {
                 "model": model,
                 "messages": [{"role": "system", "content": CHAT_SYSTEM_PROMPT}] + messages[-20:],
                 "temperature": 0.8,
                 "max_tokens": 1000
             },
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             timeout=60
         )
-        resp.raise_for_status()
-        result = resp.json()
         reply = result['choices'][0]['message']['content']
         return jsonify({"success": True, "reply": reply})
     except Exception as e:
-        err = str(e)
-        if hasattr(e, 'response') and e.response is not None:
-            err = f"API({e.response.status_code}): {e.response.text[:200]}"
-        return jsonify({"success": False, "error": err}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
