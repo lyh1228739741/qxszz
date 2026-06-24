@@ -89,7 +89,7 @@
                 <div class="upload-row">
                     <label class="upload-btn">
                         📎 上传剧本文件
-                        <input type="file" id="scriptFileUpload" accept=".txt,.md" onchange="handleScriptUpload(this)" hidden>
+                        <input type="file" id="scriptFileUpload" accept=".txt,.md,.docx,.doc" onchange="handleScriptUpload(this)" hidden>
                     </label>
                     <span id="scriptUploadName" class="upload-name"></span>
                     <button class="btn-img-delete inline" id="btnRemoveScript" style="display:none" onclick="removeScriptUpload()">×</button>
@@ -302,6 +302,7 @@
         <p id="loadingText">处理中...</p>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
 </html>

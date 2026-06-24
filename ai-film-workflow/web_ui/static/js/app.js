@@ -254,14 +254,51 @@ async function selectProject(name) {
 function handleScriptUpload(input) {
     const file = input.files[0];
     if (!file) return;
+    
+    const name = file.name.toLowerCase();
     document.getElementById('scriptUploadName').textContent = file.name;
     document.getElementById('btnRemoveScript').style.display = 'inline-block';
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        uploadedScriptContent = e.target.result;
-        document.getElementById('ideaInput').value = uploadedScriptContent;
+    
+    const setContent = (text) => {
+        uploadedScriptContent = text;
+        document.getElementById('ideaInput').value = text;
     };
-    reader.readAsText(file, 'UTF-8');
+    
+    if (name.endsWith('.docx')) {
+        // 使用 mammoth.js 解析 docx
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            mammoth.extractRawText({ arrayBuffer: e.target.result })
+                .then(result => setContent(result.value))
+                .catch(err => {
+                    showError('DOCX 解析失败: ' + err.message);
+                    removeScriptUpload();
+                });
+        };
+        reader.readAsArrayBuffer(file);
+    } else if (name.endsWith('.doc')) {
+        // .doc 旧格式尝试作为文本读取（可能部分乱码但能提取出文字）
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            // 过滤明显的乱码字符
+            const cleaned = text.replace(/[^\x20-\x7E\u4e00-\u9fff\u3000-\u30ff\uff00-\uffef\n\r\t]/g, '');
+            if (cleaned.trim().length < 10) {
+                showError('.doc 文件解析失败，建议转为 .docx 或 .txt 格式上传');
+                removeScriptUpload();
+            } else {
+                setContent(cleaned);
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    } else {
+        // .txt .md 直接读取
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            setContent(e.target.result);
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
 }
 
 function removeScriptUpload() {
