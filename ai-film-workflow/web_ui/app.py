@@ -190,7 +190,15 @@ def serve_output(filename):
 # ===== Chat API =====
 
 import requests as req
-from src.config.api_config import KIMI_API_KEY as _KIMI_KEY, KIMI_BASE_URL
+from config.api_config import KIMI_API_KEY as _KIMI_KEY, KIMI_BASE_URL
+
+@app.route('/api/debug/env', methods=['GET'])
+def debug_env():
+    return jsonify({
+        "kimi_key_env": os.environ.get('KIMI_API_KEY', 'NOT SET')[:20] + '...',
+        "kimi_key_config": _KIMI_KEY[:20] + '...' if len(_KIMI_KEY) > 3 else _KIMI_KEY,
+        "all_env_keys": [k for k in os.environ.keys() if 'KEY' in k.upper() or 'KIMI' in k.upper()]
+    })
 
 CHAT_SYSTEM_PROMPT = """你是璐子秦，一个AI影片工作流助手。你可以帮用户从零开始制作AI影片。
 
