@@ -57,7 +57,7 @@ class StoryboardGenerator:
         elif self.provider == "kimi":
             from config.api_config import KIMI_API_KEY, KIMI_BASE_URL
             self.client = StreamingAPIClient(KIMI_API_KEY, KIMI_BASE_URL)
-            self.model = "kimi-k2.6"
+            self.model = "moonshot-v1-8k"
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     

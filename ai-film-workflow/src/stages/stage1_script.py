@@ -64,7 +64,7 @@ class ScriptGenerator:
             self.model = "gpt-4o"
         elif self.provider == "kimi":
             self.client = StreamingAPIClient(KIMI_API_KEY, KIMI_BASE_URL)
-            self.model = "kimi-k2.6"
+            self.model = "moonshot-v1-8k"
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     
