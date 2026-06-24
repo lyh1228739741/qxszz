@@ -158,7 +158,14 @@ select option { background: #1a1a2e; color: #eee; }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.stage-panel h2 { margin-bottom: 20px; }
+.stage-panel h2 { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* 阶段前缀标签 */
+.stage-tag {
+    display: inline-block; background: linear-gradient(135deg, #e94560, #c73e54);
+    color: #fff; padding: 3px 10px; border-radius: 10px; font-size: 0.65em;
+    font-weight: bold; letter-spacing: 1px; white-space: nowrap;
+}
 
 .stage-nav { margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); text-align: right; }
 

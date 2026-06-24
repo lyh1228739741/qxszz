@@ -95,12 +95,6 @@ function updateProgressBar() {
 function switchStage(stage) {
     if (stage < 1 || stage > 5) return;
 
-    // 只允许跳转到已完成或当前阶段+1
-    if (stage > currentStage + 1) {
-        showError('请按顺序完成各阶段');
-        return;
-    }
-
     currentStage = stage;
 
     // 隐藏所有阶段面板

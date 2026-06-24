@@ -65,7 +65,7 @@
 
             <!-- ===== 阶段一：剧本 ===== -->
             <section class="stage-panel" id="stagePanel1">
-                <h2>📝 阶段一：剧本</h2>
+                <h2><span class="stage-tag">AI剧本</span>📝 阶段一：剧本</h2>
                 <textarea id="ideaInput" placeholder="输入你的创意...&#10;例如：一个赛博朋克风格的短片，讲一个机器人在雨夜觉醒..." rows="4"></textarea>
                 <div class="upload-row">
                     <label class="upload-btn">
@@ -76,7 +76,6 @@
                 </div>
                 <input type="text" id="styleInput" placeholder="风格要求（可选）">
                 <select id="scriptProvider">
-                    <option value="openai">GPT-4o</option>
                     <option value="kimi">Kimi</option>
                     <option value="deepseek">DeepSeek</option>
                 </select>
@@ -93,10 +92,9 @@
 
             <!-- ===== 阶段二：分镜脚本 ===== -->
             <section class="stage-panel" id="stagePanel2" style="display:none;">
-                <h2>🎬 阶段二：分镜脚本</h2>
+                <h2><span class="stage-tag">AI分镜</span>🎬 阶段二：分镜脚本</h2>
                 <input type="text" id="visualStyle" placeholder="视觉风格补充（可选）">
                 <select id="storyboardProvider">
-                    <option value="openai">GPT-4o</option>
                     <option value="kimi">Kimi</option>
                     <option value="deepseek">DeepSeek</option>
                 </select>
@@ -113,7 +111,7 @@
 
             <!-- ===== 阶段三：资产 ===== -->
             <section class="stage-panel" id="stagePanel3" style="display:none;">
-                <h2>🎨 阶段三：资产（角色 / 场景 / 道具）</h2>
+                <h2><span class="stage-tag">AI资产</span>🎨 阶段三：资产（角色 / 场景 / 道具）</h2>
                 <div class="asset-tabs">
                     <button class="tab-btn active" onclick="switchAssetTab('characters')">角色</button>
                     <button class="tab-btn" onclick="switchAssetTab('scenes')">场景</button>
@@ -156,7 +154,7 @@
 
             <!-- ===== 阶段四：分镜画面 ===== -->
             <section class="stage-panel" id="stagePanel4" style="display:none;">
-                <h2>🖼️ 阶段四：分镜画面 <span class="optional-tag">可跳过</span></h2>
+                <h2><span class="stage-tag">AI画面</span>🖼️ 阶段四：分镜画面 <span class="optional-tag">可跳过</span></h2>
                 <p class="stage-desc">将生成的资产与分镜脚本结合，生成带画面的分镜板。如果不需要可跳过。</p>
                 <div class="skip-row">
                     <button onclick="skipStage4()" class="btn-skip">跳过此阶段</button>
@@ -170,7 +168,7 @@
 
             <!-- ===== 阶段五：制作成片 ===== -->
             <section class="stage-panel" id="stagePanel5" style="display:none;">
-                <h2>🎥 阶段五：制作成片</h2>
+                <h2><span class="stage-tag">AI成片</span>🎥 阶段五：制作成片</h2>
                 <p class="stage-desc">自动生成视频片段 + 配音 + 音乐 + 音效，然后合成最终成片。</p>
                 <div class="api-row">
                     <select id="videoProvider" onchange="toggleAudioOptions()">
