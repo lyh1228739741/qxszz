@@ -23,12 +23,18 @@ class BaseAPIClient:
             "Content-Type": "application/json"
         })
     
-    def post(self, endpoint: str, payload: Dict[str, Any], timeout: int = 120) -> Dict[str, Any]:
-        """发送 POST 请求"""
+    def post(self, endpoint: str, payload: Dict[str, Any], timeout: int = 120, max_retries: int = 3) -> Dict[str, Any]:
+        """发送 POST 请求，自动重试 429 限流"""
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        response = self.session.post(url, json=payload, timeout=timeout)
-        response.raise_for_status()
-        return response.json()
+        for attempt in range(max_retries):
+            response = self.session.post(url, json=payload, timeout=timeout)
+            if response.status_code == 429 and attempt < max_retries - 1:
+                wait = (attempt + 1) * 3
+                print(f"[API] 429 rate limited, retrying in {wait}s...")
+                time.sleep(wait)
+                continue
+            response.raise_for_status()
+            return response.json()
     
     def get(self, endpoint: str, params: Optional[Dict] = None, timeout: int = 60) -> Dict[str, Any]:
         """发送 GET 请求"""
@@ -56,12 +62,19 @@ class BaseAPIClient:
 class StreamingAPIClient(BaseAPIClient):
     """支持流式响应的 API 客户端"""
     
-    def stream_post(self, endpoint: str, payload: Dict[str, Any]) -> Generator[str, None, None]:
-        """流式 POST 请求，逐字返回"""
+    def stream_post(self, endpoint: str, payload: Dict[str, Any], max_retries: int = 3) -> Generator[str, None, None]:
+        """流式 POST 请求，逐字返回，自动重试 429"""
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        payload = dict(payload)
         payload['stream'] = True
         
-        with self.session.post(url, json=payload, stream=True) as response:
+        for attempt in range(max_retries):
+            response = self.session.post(url, json=payload, stream=True)
+            if response.status_code == 429 and attempt < max_retries - 1:
+                wait = (attempt + 1) * 3
+                print(f"[API] 429 rate limited, retrying in {wait}s...")
+                time.sleep(wait)
+                continue
             response.raise_for_status()
             for line in response.iter_lines():
                 if line:
