@@ -61,11 +61,35 @@ select option { background: #1a1a2e; color: #eee; }
 .project-card {
     background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;
     cursor: pointer; transition: all 0.3s; border: 2px solid transparent;
+    position: relative; display: flex; justify-content: space-between; align-items: center;
 }
 .project-card:hover { border-color: #e94560; transform: translateY(-2px); }
 .project-card.active { border-color: #e94560; background: rgba(233,69,96,0.2); }
+.project-card .card-body { flex: 1; }
 .project-card h4 { color: #e94560; margin-bottom: 5px; }
 .project-card p { color: #888; font-size: 0.9em; }
+
+/* 回收站按钮 */
+.btn-trash {
+    background: transparent; border: none; font-size: 1.1em; cursor: pointer;
+    padding: 6px 8px; border-radius: 6px; opacity: 0.4; transition: all 0.2s;
+    line-height: 1; color: #e94560;
+}
+.btn-trash:hover { opacity: 1; background: rgba(233,69,96,0.2); transform: scale(1.15); }
+
+/* 返回按钮 + 工作流顶栏 */
+.workflow-topbar {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+    padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.btn-back {
+    background: rgba(255,255,255,0.08); color: #ccc;
+    border: 1px solid rgba(255,255,255,0.15); padding: 8px 18px;
+    border-radius: 8px; font-size: 1em; cursor: pointer; transition: all 0.3s;
+    white-space: nowrap;
+}
+.btn-back:hover { background: rgba(255,255,255,0.15); color: #fff; border-color: #e94560; }
+.project-title { color: #e94560; font-size: 1.4em; margin: 0; }
 
 /* 状态面板 */
 .status-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; }

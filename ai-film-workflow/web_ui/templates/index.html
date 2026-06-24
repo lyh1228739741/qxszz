@@ -8,179 +8,190 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🎬 AI 影片工作流</h1>
-            <p class="subtitle">璐子秦出品 —— 有点傻但靠谱</p>
-        </header>
 
-        <!-- 项目 -->
-        <section class="project-section">
-            <h2>项目</h2>
-            <div class="project-controls">
-                <input type="text" id="projectName" placeholder="输入项目名称">
-                <button onclick="createProject()" class="btn-primary">创建项目</button>
-                <button onclick="loadProjects()" class="btn-secondary">刷新列表</button>
-            </div>
-            <div id="projectList" class="project-list"></div>
-        </section>
+        <!-- ========== 首页视图 ========== -->
+        <div id="homeView" class="view">
+            <header>
+                <h1>🎬 AI 影片工作流</h1>
+                <p class="subtitle">璐子秦出品 —— 有点傻但靠谱</p>
+            </header>
 
-        <!-- 状态面板 -->
-        <section class="status-section" id="statusSection" style="display:none;">
-            <h2>状态</h2>
-            <div id="statusDisplay" class="status-display"></div>
-        </section>
-
-        <!-- 工作流 -->
-        <section class="workflow-section" id="workflowSection" style="display:none;">
-            
-            <!-- 阶段一：剧本 -->
-            <div class="stage" id="stage1">
-                <h3>阶段一：剧本</h3>
-                <div class="stage-content">
-                    <textarea id="ideaInput" placeholder="输入你的创意...&#10;例如：一个赛博朋克风格的短片，讲一个机器人在雨夜觉醒..." rows="4"></textarea>
-                    <div class="upload-row">
-                        <label class="upload-btn">
-                            📎 上传剧本文件
-                            <input type="file" id="scriptFileUpload" accept=".txt,.md,.pdf,.docx,.doc" onchange="handleScriptUpload(this)" hidden>
-                        </label>
-                        <span id="scriptUploadName" class="upload-name"></span>
-                    </div>
-                    <input type="text" id="styleInput" placeholder="风格要求（可选）">
-                    <select id="scriptProvider">
-                        <option value="openai">GPT-4o</option>
-                        <option value="kimi">Kimi</option>
-                        <option value="deepseek">DeepSeek</option>
-                    </select>
-                    <button onclick="generateScript()" class="btn-primary">生成剧本</button>
-                    
-                    <div id="scriptDisplay" class="display-area"></div>
-                    <div id="scriptRevision" class="revision-area" style="display:none;">
-                        <textarea id="scriptFeedback" placeholder="输入修改意见..." rows="3"></textarea>
-                        <button onclick="reviseScript()" class="btn-secondary">修改剧本</button>
-                    </div>
+            <section class="project-section">
+                <h2>项目</h2>
+                <div class="project-controls">
+                    <input type="text" id="projectName" placeholder="输入项目名称">
+                    <button onclick="createProject()" class="btn-primary">创建项目</button>
+                    <button onclick="loadProjects()" class="btn-secondary">刷新列表</button>
                 </div>
+                <div id="projectList" class="project-list"></div>
+            </section>
+        </div>
+
+        <!-- ========== 工作流视图 ========== -->
+        <div id="workflowView" class="view" style="display:none;">
+            <div class="workflow-topbar">
+                <button onclick="goBackHome()" class="btn-back">← 返回</button>
+                <h1 class="project-title" id="workflowProjectTitle">🎬</h1>
             </div>
 
-            <!-- 阶段二：分镜脚本 -->
-            <div class="stage" id="stage2">
-                <h3>阶段二：分镜脚本</h3>
-                <div class="stage-content">
-                    <input type="text" id="visualStyle" placeholder="视觉风格补充（可选）">
-                    <select id="storyboardProvider">
-                        <option value="openai">GPT-4o</option>
-                        <option value="kimi">Kimi</option>
-                        <option value="deepseek">DeepSeek</option>
-                    </select>
-                    <button onclick="generateStoryboard()" class="btn-primary">生成分镜脚本</button>
-                    
-                    <div id="storyboardDisplay" class="display-area"></div>
-                    <div id="storyboardRevision" class="revision-area" style="display:none;">
-                        <textarea id="storyboardFeedback" placeholder="输入修改意见..." rows="3"></textarea>
-                        <button onclick="reviseStoryboard()" class="btn-secondary">修改分镜脚本</button>
-                    </div>
-                </div>
-            </div>
+            <!-- 状态面板 -->
+            <section class="status-section">
+                <h2>状态</h2>
+                <div id="statusDisplay" class="status-display"></div>
+            </section>
 
-            <!-- 阶段三：资产 -->
-            <div class="stage" id="stage3">
-                <h3>阶段三：资产（角色 / 场景 / 道具）</h3>
-                <div class="stage-content">
-                    <div class="asset-tabs">
-                        <button class="tab-btn active" onclick="switchAssetTab('characters')">角色</button>
-                        <button class="tab-btn" onclick="switchAssetTab('scenes')">场景</button>
-                        <button class="tab-btn" onclick="switchAssetTab('props')">道具</button>
-                    </div>
-                    <select id="imageProvider">
-                        <option value="gpt-image-2">GPT-image-2</option>
-                        <option value="placeholder1">（备选图像 API 1）</option>
-                        <option value="placeholder2">（备选图像 API 2）</option>
-                    </select>
-                    <div id="assetContent" class="asset-content">
-                        <div id="characters-tab" class="asset-tab active">
-                            <div class="upload-row">
-                                <label class="upload-btn upload-sm">
-                                    📎 上传角色图
-                                    <input type="file" accept="image/*" onchange="handleAssetUpload('characters', this)" hidden>
-                                </label>
-                                <span id="upload-name-characters" class="upload-name"></span>
-                            </div>
-                            <button onclick="generateAssets('characters')" class="btn-primary">生成角色</button>
+            <!-- 工作流 -->
+            <section class="workflow-section">
+
+                <!-- 阶段一：剧本 -->
+                <div class="stage" id="stage1">
+                    <h3>阶段一：剧本</h3>
+                    <div class="stage-content">
+                        <textarea id="ideaInput" placeholder="输入你的创意...&#10;例如：一个赛博朋克风格的短片，讲一个机器人在雨夜觉醒..." rows="4"></textarea>
+                        <div class="upload-row">
+                            <label class="upload-btn">
+                                📎 上传剧本文件
+                                <input type="file" id="scriptFileUpload" accept=".txt,.md,.pdf,.docx,.doc" onchange="handleScriptUpload(this)" hidden>
+                            </label>
+                            <span id="scriptUploadName" class="upload-name"></span>
                         </div>
-                        <div id="scenes-tab" class="asset-tab">
-                            <div class="upload-row">
-                                <label class="upload-btn upload-sm">
-                                    📎 上传场景图
-                                    <input type="file" accept="image/*" onchange="handleAssetUpload('scenes', this)" hidden>
-                                </label>
-                                <span id="upload-name-scenes" class="upload-name"></span>
-                            </div>
-                            <button onclick="generateAssets('scenes')" class="btn-primary">生成场景</button>
-                        </div>
-                        <div id="props-tab" class="asset-tab">
-                            <div class="upload-row">
-                                <label class="upload-btn upload-sm">
-                                    📎 上传道具图
-                                    <input type="file" accept="image/*" onchange="handleAssetUpload('props', this)" hidden>
-                                </label>
-                                <span id="upload-name-props" class="upload-name"></span>
-                            </div>
-                            <button onclick="generateAssets('props')" class="btn-primary">生成道具</button>
+                        <input type="text" id="styleInput" placeholder="风格要求（可选）">
+                        <select id="scriptProvider">
+                            <option value="openai">GPT-4o</option>
+                            <option value="kimi">Kimi</option>
+                            <option value="deepseek">DeepSeek</option>
+                        </select>
+                        <button onclick="generateScript()" class="btn-primary">生成剧本</button>
+
+                        <div id="scriptDisplay" class="display-area"></div>
+                        <div id="scriptRevision" class="revision-area" style="display:none;">
+                            <textarea id="scriptFeedback" placeholder="输入修改意见..." rows="3"></textarea>
+                            <button onclick="reviseScript()" class="btn-secondary">修改剧本</button>
                         </div>
                     </div>
-                    <h4 class="asset-preview-title">已生成的资产</h4>
-                    <div id="assetResults" class="results-grid"></div>
                 </div>
-            </div>
 
-            <!-- 阶段四：分镜（可选） -->
-            <div class="stage optional-stage" id="stage4">
-                <h3>阶段四：分镜 <span class="optional-tag">可跳过</span></h3>
-                <div class="stage-content">
-                    <p class="stage-desc">将生成的资产与分镜脚本结合，生成带画面的分镜板。如果不需要可跳过。</p>
-                    <div class="skip-row">
-                        <button onclick="skipStage4()" class="btn-skip">跳过此阶段</button>
-                        <button onclick="generateVisualStoryboard()" class="btn-primary">生成分镜画面</button>
-                    </div>
-                    <div id="visualStoryboardDisplay" class="display-area"></div>
-                </div>
-            </div>
+                <!-- 阶段二：分镜脚本 -->
+                <div class="stage" id="stage2">
+                    <h3>阶段二：分镜脚本</h3>
+                    <div class="stage-content">
+                        <input type="text" id="visualStyle" placeholder="视觉风格补充（可选）">
+                        <select id="storyboardProvider">
+                            <option value="openai">GPT-4o</option>
+                            <option value="kimi">Kimi</option>
+                            <option value="deepseek">DeepSeek</option>
+                        </select>
+                        <button onclick="generateStoryboard()" class="btn-primary">生成分镜脚本</button>
 
-            <!-- 阶段五：制作成片 -->
-            <div class="stage" id="stage5">
-                <h3>阶段五：制作成片</h3>
-                <div class="stage-content">
-                    <p class="stage-desc">自动生成视频片段 + 配音 + 音乐 + 音效，然后合成最终成片。</p>
-                    <div class="api-row">
-                        <select id="videoProvider" onchange="toggleAudioOptions()">
-                            <option value="seedance-2.0">Seedance 2.0</option>
-                            <option value="placeholder3">（备选视频 API 1）</option>
-                            <option value="placeholder4">（备选视频 API 2）</option>
-                        </select>
-                        <select id="ttsProvider">
-                            <option value="minimax">MiniMax</option>
-                            <option value="placeholder5">（备选 TTS API）</option>
-                        </select>
-                        <select id="musicProvider">
-                            <option value="suno">Suno</option>
-                            <option value="placeholder6">（备选音乐 API）</option>
-                        </select>
-                        <select id="sfxProvider">
-                            <option value="noiz">Noiz</option>
-                            <option value="placeholder7">（备选音效 API）</option>
-                        </select>
+                        <div id="storyboardDisplay" class="display-area"></div>
+                        <div id="storyboardRevision" class="revision-area" style="display:none;">
+                            <textarea id="storyboardFeedback" placeholder="输入修改意见..." rows="3"></textarea>
+                            <button onclick="reviseStoryboard()" class="btn-secondary">修改分镜脚本</button>
+                        </div>
                     </div>
-                    <p id="seedanceHint" class="hint-text">使用 Seedance 2.0 时，配音、音乐、音效可选</p>
-                    <input type="text" id="outputName" placeholder="输出文件名（可选）">
-                    <div class="final-options">
-                        <label><input type="checkbox" id="useImages" checked> 使用参考图像</label>
-                        <label><input type="checkbox" id="skipAudio" onchange="toggleAudioSelects()"> 跳过音频（仅生成无声视频）</label>
-                    </div>
-                    <button onclick="makeFilm()" class="btn-primary btn-large">制作成片</button>
-                    <div id="filmProgress" class="film-progress" style="display:none;"></div>
-                    <div id="finalResult" class="final-result"></div>
                 </div>
-            </div>
-        </section>
+
+                <!-- 阶段三：资产 -->
+                <div class="stage" id="stage3">
+                    <h3>阶段三：资产（角色 / 场景 / 道具）</h3>
+                    <div class="stage-content">
+                        <div class="asset-tabs">
+                            <button class="tab-btn active" onclick="switchAssetTab('characters')">角色</button>
+                            <button class="tab-btn" onclick="switchAssetTab('scenes')">场景</button>
+                            <button class="tab-btn" onclick="switchAssetTab('props')">道具</button>
+                        </div>
+                        <select id="imageProvider">
+                            <option value="gpt-image-2">GPT-image-2</option>
+                            <option value="placeholder1">（备选图像 API 1）</option>
+                            <option value="placeholder2">（备选图像 API 2）</option>
+                        </select>
+                        <div id="assetContent" class="asset-content">
+                            <div id="characters-tab" class="asset-tab active">
+                                <div class="upload-row">
+                                    <label class="upload-btn upload-sm">
+                                        📎 上传角色图
+                                        <input type="file" accept="image/*" onchange="handleAssetUpload('characters', this)" hidden>
+                                    </label>
+                                    <span id="upload-name-characters" class="upload-name"></span>
+                                </div>
+                                <button onclick="generateAssets('characters')" class="btn-primary">生成角色</button>
+                            </div>
+                            <div id="scenes-tab" class="asset-tab">
+                                <div class="upload-row">
+                                    <label class="upload-btn upload-sm">
+                                        📎 上传场景图
+                                        <input type="file" accept="image/*" onchange="handleAssetUpload('scenes', this)" hidden>
+                                    </label>
+                                    <span id="upload-name-scenes" class="upload-name"></span>
+                                </div>
+                                <button onclick="generateAssets('scenes')" class="btn-primary">生成场景</button>
+                            </div>
+                            <div id="props-tab" class="asset-tab">
+                                <div class="upload-row">
+                                    <label class="upload-btn upload-sm">
+                                        📎 上传道具图
+                                        <input type="file" accept="image/*" onchange="handleAssetUpload('props', this)" hidden>
+                                    </label>
+                                    <span id="upload-name-props" class="upload-name"></span>
+                                </div>
+                                <button onclick="generateAssets('props')" class="btn-primary">生成道具</button>
+                            </div>
+                        </div>
+                        <h4 class="asset-preview-title">已生成的资产</h4>
+                        <div id="assetResults" class="results-grid"></div>
+                    </div>
+                </div>
+
+                <!-- 阶段四：分镜（可选） -->
+                <div class="stage optional-stage" id="stage4">
+                    <h3>阶段四：分镜 <span class="optional-tag">可跳过</span></h3>
+                    <div class="stage-content">
+                        <p class="stage-desc">将生成的资产与分镜脚本结合，生成带画面的分镜板。如果不需要可跳过。</p>
+                        <div class="skip-row">
+                            <button onclick="skipStage4()" class="btn-skip">跳过此阶段</button>
+                            <button onclick="generateVisualStoryboard()" class="btn-primary">生成分镜画面</button>
+                        </div>
+                        <div id="visualStoryboardDisplay" class="display-area"></div>
+                    </div>
+                </div>
+
+                <!-- 阶段五：制作成片 -->
+                <div class="stage" id="stage5">
+                    <h3>阶段五：制作成片</h3>
+                    <div class="stage-content">
+                        <p class="stage-desc">自动生成视频片段 + 配音 + 音乐 + 音效，然后合成最终成片。</p>
+                        <div class="api-row">
+                            <select id="videoProvider" onchange="toggleAudioOptions()">
+                                <option value="seedance-2.0">Seedance 2.0</option>
+                                <option value="placeholder3">（备选视频 API 1）</option>
+                                <option value="placeholder4">（备选视频 API 2）</option>
+                            </select>
+                            <select id="ttsProvider">
+                                <option value="minimax">MiniMax</option>
+                                <option value="placeholder5">（备选 TTS API）</option>
+                            </select>
+                            <select id="musicProvider">
+                                <option value="suno">Suno</option>
+                                <option value="placeholder6">（备选音乐 API）</option>
+                            </select>
+                            <select id="sfxProvider">
+                                <option value="noiz">Noiz</option>
+                                <option value="placeholder7">（备选音效 API）</option>
+                            </select>
+                        </div>
+                        <p id="seedanceHint" class="hint-text">使用 Seedance 2.0 时，配音、音乐、音效可选</p>
+                        <input type="text" id="outputName" placeholder="输出文件名（可选）">
+                        <div class="final-options">
+                            <label><input type="checkbox" id="useImages" checked> 使用参考图像</label>
+                            <label><input type="checkbox" id="skipAudio" onchange="toggleAudioSelects()"> 跳过音频（仅生成无声视频）</label>
+                        </div>
+                        <button onclick="makeFilm()" class="btn-primary btn-large">制作成片</button>
+                        <div id="filmProgress" class="film-progress" style="display:none;"></div>
+                        <div id="finalResult" class="final-result"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
 
         <!-- 日志 -->
         <section class="log-section">

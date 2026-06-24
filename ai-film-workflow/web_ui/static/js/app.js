@@ -39,6 +39,45 @@ async function apiCall(url, method = 'GET', data = null) {
     } catch (error) { showError(error.message); throw error; }
 }
 
+// ========== 视图切换 ==========
+
+function showHomeView() {
+    document.getElementById('homeView').style.display = 'block';
+    document.getElementById('workflowView').style.display = 'none';
+    document.querySelector('.log-section').style.display = 'block';
+    currentProject = null;
+    loadProjects();
+}
+
+function showWorkflowView(projectName) {
+    document.getElementById('homeView').style.display = 'none';
+    document.getElementById('workflowView').style.display = 'block';
+    document.querySelector('.log-section').style.display = 'block';
+    document.getElementById('workflowProjectTitle').textContent = `🎬 ${projectName}`;
+}
+
+function goBackHome() {
+    if (currentProject) {
+        log(`离开项目: ${currentProject}`);
+    }
+    currentProject = null;
+    stage4Skipped = false;
+    uploadedAssets = { characters: null, scenes: null, props: null };
+    uploadedScriptContent = null;
+    document.getElementById('scriptDisplay').textContent = '';
+    document.getElementById('scriptRevision').style.display = 'none';
+    document.getElementById('scriptFeedback').value = '';
+    document.getElementById('storyboardDisplay').textContent = '';
+    document.getElementById('storyboardRevision').style.display = 'none';
+    document.getElementById('storyboardFeedback').value = '';
+    document.getElementById('assetResults').innerHTML = '';
+    document.getElementById('visualStoryboardDisplay').textContent = '';
+    document.getElementById('finalResult').innerHTML = '';
+    document.getElementById('filmProgress').style.display = 'none';
+    document.getElementById('filmProgress').innerHTML = '';
+    showHomeView();
+}
+
 // ========== 项目管理 ==========
 
 async function createProject() {
@@ -51,9 +90,9 @@ async function createProject() {
         stage4Skipped = false;
         uploadedAssets = { characters: null, scenes: null, props: null };
         uploadedScriptContent = null;
-        showSuccess(`项目 "${name}" 创建成功`);
+        showWorkflowView(name);
         updateStatus(result.status);
-        showWorkflow();
+        showSuccess(`项目 "${name}" 创建成功`);
         loadProjects();
     } finally { hideLoading(); }
 }
@@ -63,16 +102,47 @@ async function loadProjects() {
         const result = await apiCall('/api/projects');
         const list = document.getElementById('projectList');
         list.innerHTML = '';
+        if (result.projects.length === 0) {
+            list.innerHTML = '<p style="color:#888;text-align:center;padding:30px;">暂无项目，输入名称创建一个吧</p>';
+            return;
+        }
         result.projects.forEach(project => {
             const card = document.createElement('div');
             card.className = `project-card ${project.name === currentProject ? 'active' : ''}`;
             const stageNames = { stage1:'剧本', stage2:'分镜脚本', stage3:'资产', stage4:'分镜', stage5:'成片' };
             const label = stageNames[project.current_stage] || '未开始';
-            card.innerHTML = `<h4>${project.name}</h4><p>阶段: ${label}</p>`;
-            card.onclick = () => selectProject(project.name);
+
+            card.innerHTML = `
+                <div class="card-body">
+                    <h4>${project.name}</h4>
+                    <p>阶段: ${label}</p>
+                </div>
+                <button class="btn-trash" title="删除项目" onclick="deleteProject(event, '${project.name}')">🗑️</button>
+            `;
+
+            card.onclick = (e) => {
+                // 不触发回收站按钮的 click
+                if (e.target.closest('.btn-trash')) return;
+                selectProject(project.name);
+            };
             list.appendChild(card);
         });
     } catch (error) { console.error('加载项目失败:', error); }
+}
+
+async function deleteProject(event, name) {
+    event.stopPropagation();
+    if (!confirm(`确定要删除项目 "${name}" 吗？此操作不可恢复。`)) return;
+
+    showLoading('删除项目中...');
+    try {
+        await apiCall(`/api/project/${name}`, 'DELETE');
+        if (currentProject === name) {
+            currentProject = null;
+        }
+        showSuccess(`项目 "${name}" 已删除`);
+        loadProjects();
+    } finally { hideLoading(); }
 }
 
 async function selectProject(name) {
@@ -81,16 +151,11 @@ async function selectProject(name) {
     showLoading('加载项目...');
     try {
         const status = await apiCall(`/api/project/${name}/status`);
+        showWorkflowView(name);
         updateStatus(status);
-        showWorkflow();
         loadProjects();
         log(`切换到: ${name}`);
     } finally { hideLoading(); }
-}
-
-function showWorkflow() {
-    document.getElementById('statusSection').style.display = 'block';
-    document.getElementById('workflowSection').style.display = 'block';
 }
 
 function updateStatus(status) {
@@ -229,7 +294,6 @@ function handleAssetUpload(type, input) {
     const reader = new FileReader();
     reader.onload = function(e) {
         uploadedAssets[type] = { name: file.name, data: e.target.result };
-        // 显示上传的图片
         const container = document.getElementById('assetResults');
         const div = document.createElement('div');
         div.className = 'result-item success';
@@ -281,7 +345,6 @@ function skipStage4() {
     stage4Skipped = true;
     log('已跳过阶段四：分镜');
     showSuccess('已跳过分镜阶段，可继续制作成片');
-    // 更新状态显示
     apiCall(`/api/project/${currentProject}/status`).then(r => updateStatus(r));
 }
 
@@ -366,7 +429,6 @@ async function makeFilm() {
             updateStatus(audioResult.status);
         } catch(e) {
             progressDiv.innerHTML += `<p class="error">[2/3] 失败: ${e.message}</p>`;
-            // 音频失败不阻断，继续合成
             progressDiv.innerHTML += '<p>音频失败，继续合成视频...</p>';
         }
     } else {
@@ -401,5 +463,5 @@ document.addEventListener('DOMContentLoaded', () => {
     log('AI 影片工作流已就绪');
     log('请创建或选择一个项目开始');
     loadProjects();
-    toggleAudioOptions(); // 初始化 Seedance hint
+    toggleAudioOptions();
 });

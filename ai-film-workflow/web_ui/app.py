@@ -56,6 +56,16 @@ def create_project():
 def get_status(name):
     return jsonify(_get_workflow(name).get_status())
 
+@app.route('/api/project/<name>', methods=['DELETE'])
+def delete_project(name):
+    import shutil
+    project_dir = Path("projects") / name
+    if project_dir.exists():
+        shutil.rmtree(project_dir)
+    if name in active_workflows:
+        del active_workflows[name]
+    return jsonify({"success": True, "deleted": name})
+
 # ===== Stage 1: Script =====
 
 @app.route('/api/project/<name>/stage1/generate', methods=['POST'])
