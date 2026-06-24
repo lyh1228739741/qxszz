@@ -205,7 +205,7 @@ def chat():
     # 读取 API Key
     api_key = os.environ.get('KIMI_API_KEY', '')
     base_url = 'https://api.moonshot.cn/v1'
-    model = 'kimi-k2.6'
+    model = 'moonshot-v1-8k'
 
     if provider == 'deepseek':
         api_key = os.environ.get('DEEPSEEK_API_KEY', '')
@@ -222,8 +222,6 @@ def chat():
             {
                 "model": model,
                 "messages": [{"role": "system", "content": CHAT_SYSTEM_PROMPT}] + messages[-20:],
-                "temperature": 0.8,
-                "max_tokens": 1000
             },
             timeout=60
         )
