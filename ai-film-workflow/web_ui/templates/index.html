@@ -22,12 +22,7 @@
                     <h2>💬 AI 助手</h2>
                     <button class="btn-trash chat-trash" title="清空聊天记录" onclick="clearChatHistory()">🗑️</button>
                 </div>
-                <div class="chat-messages" id="chatMessages">
-                    <div class="chat-bubble ai">
-                        <div class="chat-avatar">🤖</div>
-                        <div class="chat-content">嗨！我是璐子秦，你的AI影片助手 🎬<br>跟我说说你想做什么样的影片，或者直接<a onclick="document.getElementById('projectName').focus()">创建项目</a>开始吧！</div>
-                    </div>
-                </div>
+                <div class="chat-messages" id="chatMessages"></div>
                 <div class="chat-input-row">
                     <input type="text" id="chatInput" placeholder="输入消息，聊聊你想拍的影片..." onkeydown="if(event.key==='Enter')sendChat()">
                     <button onclick="sendChat()" class="btn-primary">发送</button>
@@ -140,14 +135,15 @@
                 <!-- 风格预设 -->
                 <label class="select-label">风格选择</label>
                 <div class="style-presets" id="stylePresets">
-                    <label class="style-check"><input type="checkbox" value="3d_guochao" onchange="updateStylePrompt()"> 3D国潮动漫</label>
-                    <label class="style-check"><input type="checkbox" value="ink_wash" onchange="updateStylePrompt()"> 中式水墨风格</label>
-                    <label class="style-check"><input type="checkbox" value="anime_cel" onchange="updateStylePrompt()"> 日式赛璐璐风格</label>
-                    <label class="style-check"><input type="checkbox" value="hyperreal" onchange="updateStylePrompt()"> 超写实风格</label>
-                    <label class="style-check"><input type="checkbox" value="pixel_art" onchange="updateStylePrompt()"> 像素风格</label>
-                    <label class="style-check"><input type="checkbox" value="2d_chibi" onchange="updateStylePrompt()"> 2DQ版风格</label>
-                    <label class="style-check"><input type="checkbox" value="noir_film" onchange="updateStylePrompt()"> 黑白电影风格</label>
-                    <label class="style-check"><input type="checkbox" value="handdrawn" onchange="updateStylePrompt()"> 手绘风格</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="3d_guochao" onchange="updateStylePrompt()"> 3D国潮动漫</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="ink_wash" onchange="updateStylePrompt()"> 中式水墨风格</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="anime_cel" onchange="updateStylePrompt()"> 日式赛璐璐风格</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="hyperreal" onchange="updateStylePrompt()"> 超写实风格</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="pixel_art" onchange="updateStylePrompt()"> 像素风格</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="2d_chibi" onchange="updateStylePrompt()"> 2DQ版风格</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="noir_film" onchange="updateStylePrompt()"> 黑白电影风格</label>
+                    <label class="style-check"><input type="radio" name="stylePreset" value="handdrawn" onchange="updateStylePrompt()"> 手绘风格</label>
+                    <label class="style-check style-clear"><input type="radio" name="stylePreset" value="" onchange="updateStylePrompt()" checked> 无风格</label>
                 </div>
                 <textarea id="stylePromptCustom" placeholder="选择风格后，风格描述会出现在这里。你也可以自由编辑..." rows="4" onchange="updateStylePrompt()"></textarea>
 
@@ -174,6 +170,7 @@
                             <div class="model-option"><label class="select-label">尺寸</label><select id="charRatio"><option value="1:1">1:1</option><option value="16:9">16:9</option></select></div>
                         </div>
                         <button onclick="generateAssets('characters')" class="btn-primary">生成角色</button>
+                        <div id="charResults" class="results-grid"></div>
                     </div>
                     <!-- 场景 -->
                     <div id="scenes-tab" class="asset-tab">
@@ -192,6 +189,7 @@
                             <div class="model-option"><label class="select-label">尺寸</label><select id="sceneRatio"><option value="1:1">1:1</option><option value="16:9">16:9</option></select></div>
                         </div>
                         <button onclick="generateAssets('scenes')" class="btn-primary">生成场景</button>
+                        <div id="sceneResults" class="results-grid"></div>
                     </div>
                     <!-- 道具 -->
                     <div id="props-tab" class="asset-tab">
@@ -210,10 +208,9 @@
                             <div class="model-option"><label class="select-label">尺寸</label><select id="propRatio"><option value="1:1">1:1</option><option value="16:9">16:9</option></select></div>
                         </div>
                         <button onclick="generateAssets('props')" class="btn-primary">生成道具</button>
+                        <div id="propResults" class="results-grid"></div>
                     </div>
                 </div>
-                <h4 class="asset-preview-title">已生成的资产</h4>
-                <div id="assetResults" class="results-grid"></div>
                 <div class="stage-nav">
                     <button onclick="switchStage(4)" class="btn-primary">进入下一阶段 →</button>
                 </div>
@@ -279,11 +276,18 @@
                     <select id="musicProvider"><option value="suno">Suno</option><option value="placeholder6">（备选音乐 API）</option></select>
                     <select id="sfxProvider"><option value="noiz">Noiz</option><option value="placeholder7">（备选音效 API）</option></select>
                 </div>
-                <p id="seedanceHint" class="hint-text">使用 Seedance 2.0 时，配音、音乐、音效可选</p>
                 <input type="text" id="outputName" placeholder="输出文件名（可选）">
                 <div class="final-options">
-                    <label><input type="checkbox" id="useImages" checked> 使用参考图像</label>
-                    <label><input type="checkbox" id="skipAudio" onchange="toggleAudioSelects()"> 跳过音频（仅生成无声视频）</label>
+                    <label id="useImagesLabel"><input type="checkbox" id="useImages" checked onchange="toggleRefImage()"> 使用参考图像</label>
+                    <label><input type="checkbox" id="skipAudio" onchange="toggleAudioSelects()"> 不额外生成音频</label>
+                </div>
+                <div id="refImageSection" class="ref-image-section">
+                    <label class="select-label">参考图像</label>
+                    <div class="upload-row">
+                        <label class="upload-btn">📎 上传参考图<input type="file" id="refImageUpload" accept="image/*" onchange="handleRefImage(this)" hidden></label>
+                        <span id="refImageName" class="upload-name"></span>
+                    </div>
+                    <div id="refImagePreview" class="ref-preview"></div>
                 </div>
                 <button onclick="makeFilm()" class="btn-primary btn-large">制作成片</button>
                 <div id="filmProgress" class="film-progress" style="display:none;"></div>

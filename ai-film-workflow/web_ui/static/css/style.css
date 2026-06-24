@@ -356,3 +356,11 @@ label input[type="checkbox"] { width: auto; }
 .duration-slider-row { display: flex; align-items: center; gap: 14px; margin: 8px 0 16px; }
 .duration-slider-row input[type='range'] { flex: 1; margin: 0; accent-color: #e94560; height: 6px; }
 .duration-label { color: #e94560; font-weight: bold; font-size: 1.1em; min-width: 40px; text-align: right; }
+
+
+/* ²Î¿¼Í¼Ïñ */
+.ref-image-section { margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 10px; }
+.ref-preview { margin-top: 10px; }
+.ref-preview img { max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); }
+.style-clear { opacity: 0.5; }
+.style-clear:hover { opacity: 1; }

@@ -51,6 +51,7 @@ function goBackHome() {
     uploadedAssets = { characters: null, scenes: null, props: null };
     uploadedScriptContent = null;
     stageCompletion = {};
+    refImageData = null;
     // 清空各阶段内容
     document.getElementById('scriptDisplay').textContent = '';
     document.getElementById('scriptRevision').style.display = 'none';
@@ -58,11 +59,15 @@ function goBackHome() {
     document.getElementById('storyboardDisplay').innerHTML = '';
     document.getElementById('storyboardRevision').style.display = 'none';
     document.getElementById('storyboardFeedback').value = '';
-    document.getElementById('assetResults').innerHTML = '';
+    document.getElementById('charResults').innerHTML = '';
+    document.getElementById('sceneResults').innerHTML = '';
+    document.getElementById('propResults').innerHTML = '';
     document.getElementById('visualStoryboardDisplay').textContent = '';
     document.getElementById('finalResult').innerHTML = '';
     document.getElementById('filmProgress').style.display = 'none';
     document.getElementById('filmProgress').innerHTML = '';
+    document.getElementById('refImagePreview').innerHTML = '';
+    document.getElementById('refImageName').textContent = '';
     showHomeView();
 }
 
@@ -105,6 +110,19 @@ function switchStage(stage) {
     // 显示当前阶段
     document.getElementById(`stagePanel${stage}`).style.display = 'block';
     updateProgressBar();
+
+    // 阶段5：如果跳过阶段4，隐藏参考图像选项
+    if (stage === 5) {
+        const useImagesLabel = document.getElementById('useImagesLabel');
+        if (stage4Skipped) {
+            useImagesLabel.style.display = 'none';
+            document.getElementById('refImageSection').style.display = 'none';
+            document.getElementById('useImages').checked = false;
+        } else {
+            useImagesLabel.style.display = 'flex';
+            toggleRefImage();
+        }
+    }
 
     // 滚动到顶部
     document.getElementById('workflowView').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -193,6 +211,10 @@ async function selectProject(name) {
     stageCompletion = {};
     uploadedAssets = { characters: null, scenes: null, props: null };
     uploadedScriptContent = null;
+    refImageData = null;
+    document.getElementById('refImagePreview').innerHTML = '';
+    document.getElementById('refImageName').textContent = '';
+    document.getElementById('refImageUpload').value = '';
 
     showLoading('加载项目...');
     try {
@@ -375,14 +397,12 @@ const stylePresets = {
 };
 
 function updateStylePrompt() {
-    const checkboxes = document.querySelectorAll('#stylePresets input[type=checkbox]:checked');
-    const prompts = [];
-    checkboxes.forEach(cb => {
-        if (stylePresets[cb.value]) {
-            prompts.push(stylePresets[cb.value]);
-        }
-    });
-    document.getElementById('stylePromptCustom').value = prompts.join('；');
+    const selected = document.querySelector('#stylePresets input[name="stylePreset"]:checked');
+    if (selected && selected.value && stylePresets[selected.value]) {
+        document.getElementById('stylePromptCustom').value = stylePresets[selected.value];
+    } else {
+        document.getElementById('stylePromptCustom').value = '';
+    }
 }
 
 function handleAssetUpload(type, input) {
@@ -392,11 +412,13 @@ function handleAssetUpload(type, input) {
     const reader = new FileReader();
     reader.onload = function(e) {
         uploadedAssets[type] = { name: file.name, data: e.target.result };
-        const container = document.getElementById('assetResults');
-        const div = document.createElement('div');
-        div.className = 'result-item success';
-        div.innerHTML = `<img src="${e.target.result}" alt="uploaded"><p>上传: ${file.name}</p>`;
-        container.prepend(div);
+        const container = getAssetContainer(type);
+        if (container) {
+            const div = document.createElement('div');
+            div.className = 'result-item success';
+            div.innerHTML = `<img src="${e.target.result}" alt="uploaded"><p>上传: ${file.name}</p>`;
+            container.prepend(div);
+        }
     };
     reader.readAsDataURL(file);
 }
@@ -419,7 +441,7 @@ async function generateAssets(type) {
     showLoading(`正在生成${typeName}...`);
     try {
         const result = await apiCall(`/api/project/${currentProject}/stage3/generate`, 'POST', payload);
-        displayAssetResults(result.results);
+        displayAssetResults(result.results, type);
         stageCompletion[3] = true;
         updateProgressBar();
         showSuccess(`${typeName}生成成功!`);
@@ -427,8 +449,15 @@ async function generateAssets(type) {
     finally { hideLoading(); }
 }
 
-function displayAssetResults(results) {
-    const container = document.getElementById('assetResults');
+function getAssetContainer(type) {
+    if (type === 'characters') return document.getElementById('charResults');
+    if (type === 'scenes') return document.getElementById('sceneResults');
+    return document.getElementById('propResults');
+}
+
+function displayAssetResults(results, type) {
+    const container = getAssetContainer(type);
+    if (!container) return;
     results.forEach(item => {
         const div = document.createElement('div');
         div.className = `result-item ${item.status}`;
@@ -447,8 +476,11 @@ function displayAssetResults(results) {
 function skipStage4() {
     stage4Skipped = true;
     stageCompletion[4] = true;
+    document.getElementById('stagePanel4').style.display = 'none';
+    document.getElementById('visualStoryboardDisplay').textContent = '';
     updateProgressBar();
     showSuccess('已跳过分镜阶段');
+    currentStage = 5;
     switchStage(5);
 }
 
@@ -500,8 +532,26 @@ function updateDurationLabel() {
 }
 
 function toggleAudioOptions() {
-    const videoProvider = document.getElementById('videoProvider').value;
-    document.getElementById('seedanceHint').style.display = videoProvider === 'seedance-2.0' ? 'block' : 'none';
+    // no-op - hint removed
+}
+
+let refImageData = null;
+
+function handleRefImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('refImageName').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        refImageData = e.target.result;
+        document.getElementById('refImagePreview').innerHTML = `<img src="${e.target.result}" alt="reference">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+function toggleRefImage() {
+    const checked = document.getElementById('useImages').checked;
+    document.getElementById('refImageSection').style.display = checked ? 'block' : 'none';
 }
 
 function toggleAudioSelects() {
@@ -613,11 +663,8 @@ function clearChatHistory() {
     if (!confirm('确定要清空所有聊天记录吗？')) return;
     chatHistory = [];
     localStorage.removeItem(CHAT_STORAGE_KEY);
-    document.getElementById('chatMessages').innerHTML = `
-        <div class="chat-bubble ai">
-            <div class="chat-avatar">🤖</div>
-            <div class="chat-content">嗨！我是璐子秦，你的AI影片助手 🎬<br>跟我说说你想做什么样的影片吧！</div>
-        </div>`;
+    document.getElementById('chatMessages').innerHTML = '';
+    addChatBubble('ai', '嗨！我是璐子秦，你的AI影片助手 🎬<br>跟我说说你想做什么样的影片吧！', false);
 }
 
 function addChatBubble(role, content, save = true) {
@@ -695,11 +742,17 @@ async function sendChat() {
 // ========== 初始化 ==========
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadChatHistory();
+    // 如果聊天记录为空，显示欢迎语
+    const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!saved) {
+        addChatBubble('ai', '嗨！我是璐子秦，你的AI影片助手 🎬<br>跟我说说你想做什么样的影片，或者直接<a>创建项目</a>开始吧！', false);
+    } else {
+        loadChatHistory();
+    }
     loadProjects();
-    toggleAudioOptions();
     updateModelOptions('char');
     updateModelOptions('scene');
     updateModelOptions('prop');
     updateVideoOptions();
+    updateDurationLabel();
 });
