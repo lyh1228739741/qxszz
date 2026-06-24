@@ -120,52 +120,117 @@ async function loadPrevStageContent(stage) {
     
     try {
         if (stage === 2) {
-            // 在阶段二顶部展示阶段一剧本
+            // 阶段二顶部展示阶段一剧本
             const result = await apiCall(`/api/project/${currentProject}/stage1/script`);
             if (result.content) {
                 let prev = document.getElementById('stage2PrevContent');
                 if (!prev) {
-                    prev = document.createElement('div');
-                    prev.id = 'stage2PrevContent';
-                    prev.className = 'prev-stage-content';
-                    const panel = document.getElementById('stagePanel2');
-                    panel.insertBefore(prev, panel.firstChild);
+                    prev = document.createElement('div'); prev.id = 'stage2PrevContent'; prev.className = 'prev-stage-content';
+                    document.getElementById('stagePanel2').insertBefore(prev, document.getElementById('stagePanel2').firstChild);
                 }
                 prev.innerHTML = `<h3>📝 阶段一成果：剧本</h3><div class="display-area">${result.content.replace(/\n/g, '<br>')}</div>`;
                 prev.style.display = 'block';
             }
         } else if (stage === 3) {
-            // 在阶段三顶部展示阶段二分镜
+            // 阶段三：从分镜提取人物、场景、道具
             const result = await apiCall(`/api/project/${currentProject}/stage2/storyboard`);
-            let shots = result.content?.shots || [];
-            if (shots.length === 0 && result.content) {
-                // 尝试嵌套格式
-                for (const key of Object.keys(result.content)) {
-                    if (key.startsWith('scene_') && result.content[key].shots) {
-                        shots = shots.concat(result.content[key].shots);
+            if (result.content) {
+                const data = result.content;
+                let shots = data.shots || [];
+                const characters = data.characters || [];
+                if (shots.length === 0) {
+                    for (const key of Object.keys(data)) {
+                        if (key.startsWith('scene_') && data[key].shots) {
+                            shots = shots.concat(data[key].shots);
+                        }
                     }
                 }
-            }
-            if (shots.length > 0) {
-                let prev = document.getElementById('stage3PrevContent');
-                if (!prev) {
-                    prev = document.createElement('div');
-                    prev.id = 'stage3PrevContent';
-                    prev.className = 'prev-stage-content';
-                    const panel = document.getElementById('stagePanel3');
-                    panel.insertBefore(prev, panel.querySelector('.style-presets'));
+                
+                // 提取人物
+                let charList = characters.map(c => typeof c === 'string' ? c : (c.name || c.description || '')).filter(Boolean);
+                if (charList.length === 0) {
+                    charList = [...new Set(shots.map(s => {
+                        const desc = (s.description || '');
+                        const match = desc.match(/[\u4e00-\u9fff]{2,4}(?=在|走进|看着|发现|拿起|打开)/);
+                        return match ? match[0] : '';
+                    }).filter(Boolean))];
                 }
-                let html = '<table class="storyboard-table"><tr><th>镜头</th><th>场景</th><th>时长</th><th>运镜</th></tr>';
-                shots.slice(0, 8).forEach(s => {
-                    html += `<tr><td>${s.shot_id||''}</td><td>${s.scene||s.description||''}</td><td>${s.duration||''}s</td><td>${s.camera_movement||''}</td></tr>`;
-                });
-                if (shots.length > 8) html += `<tr><td colspan="4" style="color:#888">...共${shots.length}个镜头</td></tr>`;
-                html += '</table>';
-                prev.innerHTML = `<h3>🎬 阶段二成果：分镜脚本</h3>${html}`;
-                prev.style.display = 'block';
+                
+                // 提取场景
+                const sceneList = [...new Set(shots.map(s => s.scene || s.description?.substring(0,20) || '').filter(Boolean))];
+                
+                // 提取道具（从描述中匹配常见物品）
+                const propKeywords = ['面具','剑','刀','枪','书','电脑','手机','杯子','钥匙','地图','画','雕像','灯','箱子','门','窗','桌','椅','花','笔'];
+                const propList = [...new Set(shots.flatMap(s => {
+                    const desc = (s.description || '') + (s.ai_image_prompt || '');
+                    return propKeywords.filter(kw => desc.includes(kw));
+                }))];
+                
+                // 渲染到可编辑列表
+                if (charList.length || sceneList.length || propList.length) {
+                    let prev = document.getElementById('stage3PrevContent');
+                    if (!prev) {
+                        prev = document.createElement('div'); prev.id = 'stage3PrevContent'; prev.className = 'prev-stage-content';
+                        const panel = document.getElementById('stagePanel3');
+                        panel.insertBefore(prev, panel.querySelector('.style-presets'));
+                    }
+                    prev.innerHTML = `
+                        <h3>🎬 阶段二提取：人物 / 场景 / 道具</h3>
+                        <div class="extract-grid">
+                            <div class="extract-col"><strong>👤 人物</strong><textarea id="extractedChars" rows="5">${charList.join('\n')}</textarea></div>
+                            <div class="extract-col"><strong>🏞️ 场景</strong><textarea id="extractedScenes" rows="5">${sceneList.join('\n')}</textarea></div>
+                            <div class="extract-col"><strong>🔧 道具</strong><textarea id="extractedProps" rows="5">${propList.join('\n')}</textarea></div>
+                        </div>
+                        <button onclick="applyExtractedToAssets()" class="btn-secondary" style="margin-top:8px">✅ 应用这些数据到资产生成</button>
+                    `;
+                    prev.style.display = 'block';
+                }
             }
+        } else if (stage === 4) {
+            // 阶段四：展示完整分镜
+            const result = await apiCall(`/api/project/${currentProject}/stage2/storyboard`);
+            if (result.content) {
+                let shots = result.content.shots || [];
+                if (shots.length === 0) {
+                    for (const key of Object.keys(result.content)) {
+                        if (key.startsWith('scene_') && result.content[key].shots) shots = shots.concat(result.content[key].shots);
+                    }
+                }
+                if (shots.length > 0) {
+                    let prev = document.getElementById('stage4PrevContent');
+                    if (!prev) {
+                        prev = document.createElement('div'); prev.id = 'stage4PrevContent'; prev.className = 'prev-stage-content';
+                        document.getElementById('stagePanel4').insertBefore(prev, document.getElementById('stagePanel4').firstChild);
+                    }
+                    let html = `<h3>🎬 分镜脚本（${shots.length}个镜头）</h3><table class="storyboard-table"><tr><th>#</th><th>场景</th><th>时长</th><th>运镜</th><th>光影</th></tr>`;
+                    shots.forEach(s => {
+                        html += `<tr><td>${s.shot_id||''}</td><td>${s.scene||s.description?.substring(0,20)||''}</td><td>${s.duration||''}s</td><td>${s.camera_movement||''}</td><td>${(s.lighting||'').substring(0,30)}</td></tr>`;
+                    });
+                    html += '</table>';
+                    prev.innerHTML = html;
+                    prev.style.display = 'block';
+                }
+            }
+        } else if (stage === 5) {
+            // 阶段五：根据是否跳过阶段4展示不同内容
+            let prev = document.getElementById('stage5PrevContent');
+            if (!prev) {
+                prev = document.createElement('div'); prev.id = 'stage5PrevContent'; prev.className = 'prev-stage-content';
+                document.getElementById('stagePanel5').insertBefore(prev, document.getElementById('stagePanel5').firstChild);
+            }
+            if (stage4Skipped) {
+                prev.innerHTML = '<h3>🎨 阶段三资产 → 成片参考</h3><p class="stage-desc">已跳过阶段四，将直接使用阶段三生成的资产制作成片。</p>';
+            } else {
+                prev.innerHTML = '<h3>🖼️ 阶段四分镜 → 成片参考</h3><p class="stage-desc">将基于阶段四的分镜画面制作成片。</p>';
+            }
+            prev.style.display = 'block';
         }
     } catch(e) { /* 静默失败 */ }
+}
+
+function applyExtractedToAssets() {
+    // 不做复杂处理，数据已经在文本框里可编辑
+    showSuccess('数据已加载，可编辑后用于资产生成');
 }
 
 // ========== 项目管理 ==========
