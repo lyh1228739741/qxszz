@@ -190,34 +190,8 @@ def serve_output(filename):
 # ===== Chat API =====
 
 import requests as req
-from config.api_config import KIMI_API_KEY as _KIMI_KEY, KIMI_BASE_URL
 
-@app.route('/api/debug/env', methods=['GET'])
-def debug_env():
-    return jsonify({
-        "kimi_key_env": os.environ.get('KIMI_API_KEY', 'NOT SET')[:20] + '...',
-        "kimi_key_config": _KIMI_KEY[:20] + '...' if len(_KIMI_KEY) > 3 else _KIMI_KEY,
-        "all_env_keys": [k for k in os.environ.keys() if 'KEY' in k.upper() or 'KIMI' in k.upper()]
-    })
-
-CHAT_SYSTEM_PROMPT = """你是璐子秦，一个AI影片工作流助手。你可以帮用户从零开始制作AI影片。
-
-你所在的平台提供以下功能：
-1. 📝 剧本生成 - 根据创意生成完整剧本（支持 Kimi、DeepSeek 模型）
-2. 🎬 分镜脚本 - 将剧本拆解为详细分镜脚本（含镜头、光影、时长）
-3. 🎨 资产生成 - 生成角色、场景、道具图像（8种视觉风格可选：3D国潮、水墨、赛璐璐、超写实、像素、Q版、黑白电影、手绘）
-4. 🖼️ 分镜画面 - 结合资产生成完整分镜板
-5. 🎥 成片制作 - 视频生成 + 配音配乐 + 剪辑合成
-
-工作流程：创建项目 → 输入创意 → 生成剧本 → 确认修改 → 生成分镜 → 选择风格生成资产 → 制作成片
-
-回复要求：
-- 保持友好、热情的语气，像朋友聊天一样
-- 每次回复不要太长，200字以内
-- 用emoji让对话生动
-- 主动引导用户进入下一步
-- 如果用户不知道怎么做，主动给出建议
-- 当用户准备好开始时，提醒创建项目"""
+CHAT_SYSTEM_PROMPT = """你是璐子秦，AI影片助手。帮用户从零做AI影片。功能：1剧本 2分镜 3资产(8风格) 4画面 5成片。回复友好简短，主动引导。"""
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -228,48 +202,40 @@ def chat():
     if not messages:
         return jsonify({"success": False, "error": "No messages provided"}), 400
 
-    # 选择 API 配置
+    # 读取 API Key
+    api_key = os.environ.get('KIMI_API_KEY', '')
+    base_url = 'https://api.moonshot.cn/v1'
+    model = 'kimi-k2.6'
+
     if provider == 'deepseek':
         api_key = os.environ.get('DEEPSEEK_API_KEY', '')
         base_url = 'https://api.deepseek.com/v1'
         model = 'deepseek-chat'
-    else:
-        api_key = os.environ.get('KIMI_API_KEY') or _KIMI_KEY
-        base_url = KIMI_BASE_URL
-        model = 'kimi-k2.6'
 
-    if not api_key or api_key == '***':
-        return jsonify({"success": False, "error": f"未配置 {provider.upper()}_API_KEY，请在 Railway Variables 中添加"}), 500
-
-    # 构建请求
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": CHAT_SYSTEM_PROMPT}
-        ] + messages[-20:],  # 保留最近20条
-        "temperature": 0.8,
-        "max_tokens": 1000
-    }
+    if not api_key or len(api_key) < 10:
+        return jsonify({"success": False, "error": f"{provider.upper()}_API_KEY 未配置或无效，请在 Railway Variables 中设置"}), 500
 
     try:
         resp = req.post(
             f"{base_url}/chat/completions",
-            json=payload,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+            json={
+                "model": model,
+                "messages": [{"role": "system", "content": CHAT_SYSTEM_PROMPT}] + messages[-20:],
+                "temperature": 0.8,
+                "max_tokens": 1000
             },
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             timeout=60
         )
         resp.raise_for_status()
         result = resp.json()
         reply = result['choices'][0]['message']['content']
         return jsonify({"success": True, "reply": reply})
-    except req.exceptions.HTTPError as e:
-        err_msg = f"API错误({resp.status_code}): {resp.text[:200]}"
-        return jsonify({"success": False, "error": err_msg}), 500
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        err = str(e)
+        if hasattr(e, 'response') and e.response is not None:
+            err = f"API({e.response.status_code}): {e.response.text[:200]}"
+        return jsonify({"success": False, "error": err}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
