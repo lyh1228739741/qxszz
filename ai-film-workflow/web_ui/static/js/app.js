@@ -339,14 +339,14 @@ const modelOptions = {
     }
 };
 
-function updateModelOptions() {
-    const model = document.getElementById('imageProvider').value;
+function updateModelOptions(prefix) {
+    const model = document.getElementById(prefix + 'Provider').value;
     const opts = modelOptions[model] || modelOptions['gpt-image-2'];
     
-    const resSelect = document.getElementById('imageResolution');
+    const resSelect = document.getElementById(prefix + 'Resolution');
     resSelect.innerHTML = opts.resolutions.map(r => `<option value="${r}">${r.toUpperCase()}</option>`).join('');
     
-    const ratioSelect = document.getElementById('imageRatio');
+    const ratioSelect = document.getElementById(prefix + 'Ratio');
     ratioSelect.innerHTML = opts.ratios.map(r => `<option value="${r}">${r}</option>`).join('');
 }
 
@@ -405,10 +405,11 @@ async function generateAssets(type) {
     if (!currentProject) { showError('请先选择项目'); return; }
     const typeNames = { characters: '角色', scenes: '场景', props: '道具' };
     const typeName = typeNames[type] || type;
-    const provider = document.getElementById('imageProvider').value;
+    const prefix = type === 'characters' ? 'char' : type === 'scenes' ? 'scene' : 'prop';
+    const provider = document.getElementById(prefix + 'Provider').value;
     const stylePrompt = document.getElementById('stylePromptCustom').value.trim();
-    const resolution = document.getElementById('imageResolution')?.value || '2k';
-    const ratio = document.getElementById('imageRatio')?.value || '16:9';
+    const resolution = document.getElementById(prefix + 'Resolution')?.value || '2k';
+    const ratio = document.getElementById(prefix + 'Ratio')?.value || '16:9';
 
     const payload = { asset_type: type, provider, style_prompt: stylePrompt, resolution, ratio };
     if (uploadedAssets[type]) {
@@ -466,6 +467,37 @@ async function generateVisualStoryboard() {
 }
 
 // ========== 阶段五：制作成片 ==========
+
+// 视频模型配置
+const videoModelConfig = {
+    'seedance-2.0':       { minDur: 4, maxDur: 15, qualities: ['480p','720p','1080p','4k'], ratios: ['21:9','16:9','4:3','1:1','3:4','9:16'] },
+    'seedance-2.0-fast':  { minDur: 4, maxDur: 15, qualities: ['480p','720p'], ratios: ['21:9','16:9','4:3','1:1','3:4','9:16'] },
+    'seedance-2.0-mini':  { minDur: 4, maxDur: 15, qualities: ['480p','720p'], ratios: ['21:9','16:9','4:3','1:1','3:4','9:16'] },
+    'keling-v3':          { minDur: 3, maxDur: 15, qualities: ['720p','1080p','4k'], ratios: ['16:9','1:1','9:16'] },
+    'wan-2.7':            { minDur: 2, maxDur: 15, qualities: ['720p','1080p'], ratios: ['16:9','4:3','1:1','3:4','9:16'] }
+};
+
+function updateVideoOptions() {
+    const model = document.getElementById('videoProvider').value;
+    const cfg = videoModelConfig[model] || videoModelConfig['seedance-2.0'];
+    
+    const durSlider = document.getElementById('videoDuration');
+    durSlider.min = cfg.minDur;
+    durSlider.max = cfg.maxDur;
+    durSlider.value = Math.min(durSlider.value, cfg.maxDur);
+    updateDurationLabel();
+    
+    const qSelect = document.getElementById('videoQuality');
+    qSelect.innerHTML = cfg.qualities.map(q => `<option value="${q}">${q.toUpperCase()}</option>`).join('');
+    
+    const rSelect = document.getElementById('videoRatio');
+    rSelect.innerHTML = cfg.ratios.map(r => `<option value="${r}">${r}</option>`).join('');
+}
+
+function updateDurationLabel() {
+    const val = document.getElementById('videoDuration').value;
+    document.getElementById('durationLabel').textContent = val + '秒';
+}
 
 function toggleAudioOptions() {
     const videoProvider = document.getElementById('videoProvider').value;
@@ -567,7 +599,12 @@ function loadChatHistory() {
         const saved = localStorage.getItem(CHAT_STORAGE_KEY);
         if (saved) {
             chatHistory = JSON.parse(saved);
-            chatHistory.forEach(msg => addChatBubble(msg.role, msg.content, false));
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '';
+            chatHistory.forEach(msg => {
+                const role = msg.role === 'assistant' ? 'ai' : msg.role;
+                addChatBubble(role, msg.content, false);
+            });
         }
     } catch(e) { chatHistory = []; }
 }
@@ -596,7 +633,6 @@ function addChatBubble(role, content, save = true) {
     `;
     container.appendChild(bubble);
     container.scrollTop = container.scrollHeight;
-    if (save && role !== 'user') saveChatHistory();
 }
 
 function quickChat(text) {
@@ -635,6 +671,7 @@ async function sendChat() {
         document.getElementById('typingBubble')?.remove();
         addChatBubble('ai', result.reply);
         chatHistory.push({ role: 'assistant', content: result.reply });
+        saveChatHistory();
     } catch (e) {
         document.getElementById('typingBubble')?.remove();
         const msg = e.message;
@@ -661,5 +698,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadChatHistory();
     loadProjects();
     toggleAudioOptions();
-    updateModelOptions();
+    updateModelOptions('char');
+    updateModelOptions('scene');
+    updateModelOptions('prop');
+    updateVideoOptions();
 });

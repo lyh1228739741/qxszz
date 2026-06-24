@@ -349,3 +349,10 @@ label input[type="checkbox"] { width: auto; }
     .progress-node .node-label { font-size: 0.65em; }
     .progress-line { min-width: 8px; max-width: 30px; }
 }
+
+
+/* Ê±³¤»¬¿é */
+.video-options { margin: 10px 0; }
+.duration-slider-row { display: flex; align-items: center; gap: 14px; margin: 8px 0 16px; }
+.duration-slider-row input[type='range'] { flex: 1; margin: 0; accent-color: #e94560; height: 6px; }
+.duration-label { color: #e94560; font-weight: bold; font-size: 1.1em; min-width: 40px; text-align: right; }

@@ -156,48 +156,58 @@
                     <button class="tab-btn" onclick="switchAssetTab('scenes')">场景</button>
                     <button class="tab-btn" onclick="switchAssetTab('props')">道具</button>
                 </div>
-                <label class="select-label">模型选择</label>
-                <select id="imageProvider" onchange="updateModelOptions()">
-                    <option value="gpt-image-2">GPT-image-2</option>
-                    <option value="nano-banana">Nano Banana</option>
-                    <option value="seedream-5">Seedream 5</option>
-                </select>
-                <div class="model-options-row">
-                    <div class="model-option">
-                        <label class="select-label">清晰度</label>
-                        <select id="imageResolution">
-                            <option value="1k">1K</option>
-                            <option value="2k">2K</option>
-                        </select>
-                    </div>
-                    <div class="model-option">
-                        <label class="select-label">尺寸</label>
-                        <select id="imageRatio">
-                            <option value="1:1">1:1</option>
-                            <option value="16:9">16:9</option>
-                            <option value="9:16">9:16</option>
-                        </select>
-                    </div>
-                </div>
                 <div id="assetContent" class="asset-content">
+                    <!-- 角色 -->
                     <div id="characters-tab" class="asset-tab active">
                         <div class="upload-row">
                             <label class="upload-btn upload-sm">📎 上传角色图<input type="file" accept="image/*" onchange="handleAssetUpload('characters', this)" hidden></label>
                             <span id="upload-name-characters" class="upload-name"></span>
                         </div>
+                        <label class="select-label">模型选择</label>
+                        <select id="charProvider" onchange="updateModelOptions('char')">
+                            <option value="gpt-image-2">GPT-image-2</option>
+                            <option value="nano-banana">Nano Banana</option>
+                            <option value="seedream-5">Seedream 5</option>
+                        </select>
+                        <div class="model-options-row">
+                            <div class="model-option"><label class="select-label">清晰度</label><select id="charResolution"><option value="1k">1K</option><option value="2k">2K</option></select></div>
+                            <div class="model-option"><label class="select-label">尺寸</label><select id="charRatio"><option value="1:1">1:1</option><option value="16:9">16:9</option></select></div>
+                        </div>
                         <button onclick="generateAssets('characters')" class="btn-primary">生成角色</button>
                     </div>
+                    <!-- 场景 -->
                     <div id="scenes-tab" class="asset-tab">
                         <div class="upload-row">
                             <label class="upload-btn upload-sm">📎 上传场景图<input type="file" accept="image/*" onchange="handleAssetUpload('scenes', this)" hidden></label>
                             <span id="upload-name-scenes" class="upload-name"></span>
                         </div>
+                        <label class="select-label">模型选择</label>
+                        <select id="sceneProvider" onchange="updateModelOptions('scene')">
+                            <option value="gpt-image-2">GPT-image-2</option>
+                            <option value="nano-banana">Nano Banana</option>
+                            <option value="seedream-5">Seedream 5</option>
+                        </select>
+                        <div class="model-options-row">
+                            <div class="model-option"><label class="select-label">清晰度</label><select id="sceneResolution"><option value="1k">1K</option><option value="2k">2K</option></select></div>
+                            <div class="model-option"><label class="select-label">尺寸</label><select id="sceneRatio"><option value="1:1">1:1</option><option value="16:9">16:9</option></select></div>
+                        </div>
                         <button onclick="generateAssets('scenes')" class="btn-primary">生成场景</button>
                     </div>
+                    <!-- 道具 -->
                     <div id="props-tab" class="asset-tab">
                         <div class="upload-row">
                             <label class="upload-btn upload-sm">📎 上传道具图<input type="file" accept="image/*" onchange="handleAssetUpload('props', this)" hidden></label>
                             <span id="upload-name-props" class="upload-name"></span>
+                        </div>
+                        <label class="select-label">模型选择</label>
+                        <select id="propProvider" onchange="updateModelOptions('prop')">
+                            <option value="gpt-image-2">GPT-image-2</option>
+                            <option value="nano-banana">Nano Banana</option>
+                            <option value="seedream-5">Seedream 5</option>
+                        </select>
+                        <div class="model-options-row">
+                            <div class="model-option"><label class="select-label">清晰度</label><select id="propResolution"><option value="1k">1K</option><option value="2k">2K</option></select></div>
+                            <div class="model-option"><label class="select-label">尺寸</label><select id="propRatio"><option value="1:1">1:1</option><option value="16:9">16:9</option></select></div>
                         </div>
                         <button onclick="generateAssets('props')" class="btn-primary">生成道具</button>
                     </div>
@@ -227,13 +237,44 @@
             <section class="stage-panel" id="stagePanel5" style="display:none;">
                 <h2>🎥 阶段五：制作成片</h2>
                 <p class="stage-desc">自动生成视频片段 + 配音 + 音乐 + 音效，然后合成最终成片。</p>
+                
                 <label class="select-label">模型选择</label>
-                <div class="api-row">
-                    <select id="videoProvider" onchange="toggleAudioOptions()">
-                        <option value="seedance-2.0">Seedance 2.0</option>
-                        <option value="placeholder3">（备选视频 API 1）</option>
-                        <option value="placeholder4">（备选视频 API 2）</option>
+                <select id="videoProvider" onchange="updateVideoOptions()">
+                    <option value="seedance-2.0">Seedance 2.0</option>
+                    <option value="seedance-2.0-fast">Seedance 2.0 Fast</option>
+                    <option value="seedance-2.0-mini">Seedance 2.0 Mini</option>
+                    <option value="keling-v3">Keling V3.0 Omni</option>
+                    <option value="wan-2.7">Wan 2.7</option>
+                </select>
+
+                <div class="video-options">
+                    <label class="select-label">时长</label>
+                    <div class="duration-slider-row">
+                        <input type="range" id="videoDuration" min="2" max="15" value="5" step="1" oninput="updateDurationLabel()">
+                        <span class="duration-label" id="durationLabel">5秒</span>
+                    </div>
+
+                    <label class="select-label">清晰度</label>
+                    <select id="videoQuality">
+                        <option value="480p">480p</option>
+                        <option value="720p">720p</option>
+                        <option value="1080p">1080p</option>
+                        <option value="4k">4K</option>
                     </select>
+
+                    <label class="select-label">尺寸</label>
+                    <select id="videoRatio">
+                        <option value="21:9">21:9</option>
+                        <option value="16:9">16:9</option>
+                        <option value="4:3">4:3</option>
+                        <option value="1:1">1:1</option>
+                        <option value="3:4">3:4</option>
+                        <option value="9:16">9:16</option>
+                    </select>
+                </div>
+
+                <label class="select-label">模型选择（配音/音乐/音效）</label>
+                <div class="api-row">
                     <select id="ttsProvider"><option value="minimax">MiniMax</option><option value="placeholder5">（备选 TTS API）</option></select>
                     <select id="musicProvider"><option value="suno">Suno</option><option value="placeholder6">（备选音乐 API）</option></select>
                     <select id="sfxProvider"><option value="noiz">Noiz</option><option value="placeholder7">（备选音效 API）</option></select>
