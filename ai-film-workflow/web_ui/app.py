@@ -190,6 +190,7 @@ def serve_output(filename):
 # ===== Chat API =====
 
 import requests as req
+from src.config.api_config import KIMI_API_KEY as _KIMI_KEY, KIMI_BASE_URL
 
 CHAT_SYSTEM_PROMPT = """你是璐子秦，一个AI影片工作流助手。你可以帮用户从零开始制作AI影片。
 
@@ -225,11 +226,11 @@ def chat():
         base_url = 'https://api.deepseek.com/v1'
         model = 'deepseek-chat'
     else:
-        api_key = os.environ.get('KIMI_API_KEY', '')
-        base_url = 'https://api.moonshot.cn/v1'
+        api_key = os.environ.get('KIMI_API_KEY') or _KIMI_KEY
+        base_url = KIMI_BASE_URL
         model = 'kimi-k2.6'
 
-    if not api_key:
+    if not api_key or api_key == '***':
         return jsonify({"success": False, "error": f"未配置 {provider.upper()}_API_KEY，请在 Railway Variables 中添加"}), 500
 
     # 构建请求
