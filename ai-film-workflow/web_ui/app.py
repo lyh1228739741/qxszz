@@ -7,6 +7,7 @@ except Exception:
     pass
 
 import json
+import os
 import time
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_file
@@ -170,6 +171,7 @@ def serve_output(filename):
     return jsonify({"error": "not found"}), 404
 
 if __name__ == '__main__':
-    print("AI Film Workflow Web UI (5-stage)")
-    print("http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('DEBUG', 'false').lower() == 'true'
+    print(f"AI Film Workflow Web UI (5-stage) :{port}")
+    app.run(host='0.0.0.0', port=port, debug=debug)
