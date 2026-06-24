@@ -383,3 +383,9 @@ label input[type="checkbox"] { width: auto; }
 /* 参考图片 */\n.ref-img-item { position: relative; display: inline-block; margin: 6px; }
 .ref-img-item img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); }
 .ref-img-item span { display: block; font-size: 0.75em; color: #888; text-align: center; margin-top: 2px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+
+/* 前一阶段成果展示 */
+.prev-stage-content { margin-bottom: 20px; padding: 16px; background: rgba(78,204,163,0.06); border-radius: 10px; border: 1px solid rgba(78,204,163,0.15); }
+.prev-stage-content h3 { color: #4ecca3 !important; background: none !important; padding: 0 !important; margin-bottom: 10px !important; font-size: 1em !important; }
+.prev-stage-content .display-area { max-height: 300px; font-size: 0.88em; }

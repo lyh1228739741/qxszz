@@ -50,29 +50,7 @@ function showWorkflowView(projectName) {
 }
 
 function goBackHome() {
-    currentProject = null;
-    currentStage = 1;
-    stage4Skipped = false;
-    uploadedAssets = { characters: [], scenes: [], props: [] };
-    uploadedScriptContent = null;
-    stageCompletion = {};
-    refImageData = [];
-    // 清空各阶段内容
-    document.getElementById('scriptDisplay').textContent = '';
-    document.getElementById('scriptRevision').style.display = 'none';
-    document.getElementById('scriptFeedback').value = '';
-    document.getElementById('storyboardDisplay').innerHTML = '';
-    document.getElementById('storyboardRevision').style.display = 'none';
-    document.getElementById('storyboardFeedback').value = '';
-    document.getElementById('charResults').innerHTML = '';
-    document.getElementById('sceneResults').innerHTML = '';
-    document.getElementById('propResults').innerHTML = '';
-    document.getElementById('visualStoryboardDisplay').textContent = '';
-    document.getElementById('finalResult').innerHTML = '';
-    document.getElementById('filmProgress').style.display = 'none';
-    document.getElementById('filmProgress').innerHTML = '';
-    document.getElementById('refImagePreview').innerHTML = '';
-    document.getElementById('refImageName').textContent = '';
+    // 不清空项目数据，只切换视图
     showHomeView();
 }
 
@@ -116,6 +94,9 @@ function switchStage(stage) {
     document.getElementById(`stagePanel${stage}`).style.display = 'block';
     updateProgressBar();
 
+    // 加载上一阶段成果
+    if (stage >= 2 && currentProject) loadPrevStageContent(stage);
+
     // 阶段5：如果跳过阶段4，隐藏参考图像选项
     if (stage === 5) {
         const useImagesLabel = document.getElementById('useImagesLabel');
@@ -131,6 +112,52 @@ function switchStage(stage) {
 
     // 滚动到顶部
     document.getElementById('workflowView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// 加载前一阶段成果到当前阶段展示
+async function loadPrevStageContent(stage) {
+    if (!currentProject) return;
+    
+    try {
+        if (stage === 2) {
+            // 在阶段二顶部展示阶段一剧本
+            const result = await apiCall(`/api/project/${currentProject}/stage1/script`);
+            if (result.content) {
+                let prev = document.getElementById('stage2PrevContent');
+                if (!prev) {
+                    prev = document.createElement('div');
+                    prev.id = 'stage2PrevContent';
+                    prev.className = 'prev-stage-content';
+                    const panel = document.getElementById('stagePanel2');
+                    panel.insertBefore(prev, panel.firstChild);
+                }
+                prev.innerHTML = `<h3>📝 阶段一成果：剧本</h3><div class="display-area">${result.content.replace(/\n/g, '<br>')}</div>`;
+                prev.style.display = 'block';
+            }
+        } else if (stage === 3) {
+            // 在阶段三顶部展示阶段二分镜
+            const result = await apiCall(`/api/project/${currentProject}/stage2/storyboard`);
+            if (result.content && result.content.shots) {
+                let prev = document.getElementById('stage3PrevContent');
+                if (!prev) {
+                    prev = document.createElement('div');
+                    prev.id = 'stage3PrevContent';
+                    prev.className = 'prev-stage-content';
+                    const panel = document.getElementById('stagePanel3');
+                    panel.insertBefore(prev, panel.querySelector('.style-presets'));
+                }
+                const shots = result.content.shots || [];
+                let html = '<table class="storyboard-table"><tr><th>镜头</th><th>场景</th><th>时长</th><th>运镜</th></tr>';
+                shots.slice(0, 8).forEach(s => {
+                    html += `<tr><td>${s.shot_id||''}</td><td>${s.scene||''}</td><td>${s.duration||''}s</td><td>${s.camera_movement||''}</td></tr>`;
+                });
+                if (shots.length > 8) html += `<tr><td colspan="4" style="color:#888">...共${shots.length}个镜头</td></tr>`;
+                html += '</table>';
+                prev.innerHTML = `<h3>🎬 阶段二成果：分镜脚本</h3>${html}`;
+                prev.style.display = 'block';
+            }
+        }
+    } catch(e) { /* 静默失败 */ }
 }
 
 // ========== 项目管理 ==========
@@ -248,6 +275,8 @@ async function selectProject(name) {
         }
 
         switchStage(nextStage);
+        // 加载各阶段已有成果
+        if (nextStage >= 2) loadPrevStageContent(nextStage);
         loadProjects();
         showSuccess(`已加载: ${name}`);
     } catch (e) { showError(e.message); }

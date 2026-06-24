@@ -63,6 +63,28 @@ def create_project():
 def get_status(name):
     return jsonify(_get_workflow(name).get_status())
 
+@app.route('/api/project/<name>/stage1/script', methods=['GET'])
+def get_script(name):
+    wf = _get_workflow(name)
+    state = wf.get_status()
+    script_path = wf.state.get('stage1_script', '')
+    content = ''
+    if script_path and Path(script_path).exists():
+        with open(script_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    return jsonify({"content": content, "stage1_complete": state.get('stage1_complete', False)})
+
+@app.route('/api/project/<name>/stage2/storyboard', methods=['GET'])
+def get_storyboard(name):
+    wf = _get_workflow(name)
+    state = wf.get_status()
+    sb_path = wf.state.get('stage2_storyboard', '')
+    content = {}
+    if sb_path and Path(sb_path).exists():
+        with open(sb_path, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+    return jsonify({"content": content, "stage2_complete": state.get('stage2_complete', False)})
+
 @app.route('/api/project/<name>', methods=['DELETE'])
 def delete_project(name):
     import shutil
