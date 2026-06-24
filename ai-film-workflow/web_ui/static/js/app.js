@@ -137,7 +137,16 @@ async function loadPrevStageContent(stage) {
         } else if (stage === 3) {
             // 在阶段三顶部展示阶段二分镜
             const result = await apiCall(`/api/project/${currentProject}/stage2/storyboard`);
-            if (result.content && result.content.shots) {
+            let shots = result.content?.shots || [];
+            if (shots.length === 0 && result.content) {
+                // 尝试嵌套格式
+                for (const key of Object.keys(result.content)) {
+                    if (key.startsWith('scene_') && result.content[key].shots) {
+                        shots = shots.concat(result.content[key].shots);
+                    }
+                }
+            }
+            if (shots.length > 0) {
                 let prev = document.getElementById('stage3PrevContent');
                 if (!prev) {
                     prev = document.createElement('div');
@@ -146,10 +155,9 @@ async function loadPrevStageContent(stage) {
                     const panel = document.getElementById('stagePanel3');
                     panel.insertBefore(prev, panel.querySelector('.style-presets'));
                 }
-                const shots = result.content.shots || [];
                 let html = '<table class="storyboard-table"><tr><th>镜头</th><th>场景</th><th>时长</th><th>运镜</th></tr>';
                 shots.slice(0, 8).forEach(s => {
-                    html += `<tr><td>${s.shot_id||''}</td><td>${s.scene||''}</td><td>${s.duration||''}s</td><td>${s.camera_movement||''}</td></tr>`;
+                    html += `<tr><td>${s.shot_id||''}</td><td>${s.scene||s.description||''}</td><td>${s.duration||''}s</td><td>${s.camera_movement||''}</td></tr>`;
                 });
                 if (shots.length > 8) html += `<tr><td colspan="4" style="color:#888">...共${shots.length}个镜头</td></tr>`;
                 html += '</table>';
@@ -442,11 +450,36 @@ async function reviseStoryboard() {
 
 function displayStoryboard(storyboard) {
     const display = document.getElementById('storyboardDisplay');
-    const shots = storyboard.shots || [];
+    
+    // 提取所有镜头（支持扁平 shots 和嵌套 scene_NN.shots 两种格式）
+    let shots = storyboard.shots || [];
+    if (shots.length === 0) {
+        // 尝试从嵌套场景中提取
+        for (const key of Object.keys(storyboard)) {
+            if (key.startsWith('scene_') && storyboard[key].shots) {
+                const sceneShots = storyboard[key].shots.map(s => ({
+                    ...s,
+                    scene: s.scene || storyboard[key].description || key
+                }));
+                shots = shots.concat(sceneShots);
+            }
+        }
+    }
+    
     if (shots.length === 0) { display.textContent = JSON.stringify(storyboard, null, 2); return; }
-    let html = '<table class="storyboard-table"><tr><th>镜头</th><th>场景</th><th>时长</th><th>运镜</th><th>光影</th><th>提示词</th></tr>';
+    
+    let html = '<table class="storyboard-table"><tr><th>镜头</th><th>场景</th><th>时长</th><th>运镜</th><th>构图</th><th>光影</th><th>AI提示词</th></tr>';
     shots.forEach(shot => {
-        html += `<tr><td class="shot-id">${shot.shot_id || ''}</td><td>${shot.scene || ''}</td><td>${shot.duration || ''}s</td><td>${shot.camera_movement || ''}</td><td>${shot.lighting || ''}</td><td class="prompt" title="${shot.ai_image_prompt || ''}">${(shot.ai_image_prompt || '').substring(0,80)}...</td></tr>`;
+        const prompt = shot.ai_image_prompt || '';
+        html += `<tr>
+            <td class="shot-id">${shot.shot_id || ''}</td>
+            <td>${shot.scene || shot.description || ''}</td>
+            <td>${shot.duration || ''}s</td>
+            <td>${shot.camera_movement || ''}</td>
+            <td>${shot.composition || shot.camera_height || ''}</td>
+            <td>${(shot.lighting || '').substring(0,40)}</td>
+            <td class="prompt" title="${prompt}">${prompt.substring(0,60)}...</td>
+        </tr>`;
     });
     html += '</table>';
     display.innerHTML = html;
