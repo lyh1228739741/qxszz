@@ -364,3 +364,22 @@ label input[type="checkbox"] { width: auto; }
 .ref-preview img { max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); }
 .style-clear { opacity: 0.5; }
 .style-clear:hover { opacity: 1; }
+
+
+/* Í¼Æ¬É¾³ý°´Å¥ */
+.uploaded-item { position: relative; }
+.btn-img-delete {
+    position: absolute; top: 4px; right: 4px; z-index: 5;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(233,69,96,0.8); color: #fff; border: none;
+    font-size: 14px; line-height: 1; cursor: pointer; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.btn-img-delete:hover { background: #e94560; transform: scale(1.15); }
+.btn-img-delete.inline { position: static; width: auto; height: auto; border-radius: 4px; padding: 2px 8px; font-size: 16px; background: transparent; color: #e94560; font-weight: bold; }
+.btn-img-delete.inline:hover { background: rgba(233,69,96,0.2); }
+
+/* ²Î¿¼Í¼Æ¬ */\n.ref-img-item { position: relative; display: inline-block; margin: 6px; }
+.ref-img-item img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); }
+.ref-img-item span { display: block; font-size: 0.75em; color: #888; text-align: center; margin-top: 2px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -5,7 +5,7 @@
 let currentProject = null;
 let currentStage = 1;
 let uploadedScriptContent = null;
-let uploadedAssets = { characters: null, scenes: null, props: null };
+let uploadedAssets = { characters: [], scenes: [], props: [] };
 let stage4Skipped = false;
 let stageCompletion = {}; // {1: true, 2: false, ...}
 
@@ -48,10 +48,10 @@ function goBackHome() {
     currentProject = null;
     currentStage = 1;
     stage4Skipped = false;
-    uploadedAssets = { characters: null, scenes: null, props: null };
+    uploadedAssets = { characters: [], scenes: [], props: [] };
     uploadedScriptContent = null;
     stageCompletion = {};
-    refImageData = null;
+    refImageData = [];
     // 清空各阶段内容
     document.getElementById('scriptDisplay').textContent = '';
     document.getElementById('scriptRevision').style.display = 'none';
@@ -140,7 +140,7 @@ async function createProject() {
         currentStage = 1;
         stage4Skipped = false;
         stageCompletion = {};
-        uploadedAssets = { characters: null, scenes: null, props: null };
+        uploadedAssets = { characters: [], scenes: [], props: [] };
         uploadedScriptContent = null;
 
         showWorkflowView(name);
@@ -209,9 +209,9 @@ async function selectProject(name) {
     currentStage = 1;
     stage4Skipped = false;
     stageCompletion = {};
-    uploadedAssets = { characters: null, scenes: null, props: null };
+    uploadedAssets = { characters: [], scenes: [], props: [] };
     uploadedScriptContent = null;
-    refImageData = null;
+    refImageData = [];
     document.getElementById('refImagePreview').innerHTML = '';
     document.getElementById('refImageName').textContent = '';
     document.getElementById('refImageUpload').value = '';
@@ -255,12 +255,21 @@ function handleScriptUpload(input) {
     const file = input.files[0];
     if (!file) return;
     document.getElementById('scriptUploadName').textContent = file.name;
+    document.getElementById('btnRemoveScript').style.display = 'inline-block';
     const reader = new FileReader();
     reader.onload = function(e) {
         uploadedScriptContent = e.target.result;
         document.getElementById('ideaInput').value = uploadedScriptContent;
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
+}
+
+function removeScriptUpload() {
+    uploadedScriptContent = null;
+    document.getElementById('scriptUploadName').textContent = '';
+    document.getElementById('btnRemoveScript').style.display = 'none';
+    document.getElementById('scriptFileUpload').value = '';
+    document.getElementById('ideaInput').value = '';
 }
 
 async function generateScript() {
@@ -406,21 +415,38 @@ function updateStylePrompt() {
 }
 
 function handleAssetUpload(type, input) {
-    const file = input.files[0];
-    if (!file) return;
-    document.getElementById(`upload-name-${type}`).textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        uploadedAssets[type] = { name: file.name, data: e.target.result };
-        const container = getAssetContainer(type);
-        if (container) {
-            const div = document.createElement('div');
-            div.className = 'result-item success';
-            div.innerHTML = `<img src="${e.target.result}" alt="uploaded"><p>上传: ${file.name}</p>`;
-            container.prepend(div);
-        }
-    };
-    reader.readAsDataURL(file);
+    const files = input.files;
+    if (!files.length) return;
+    
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const id = Date.now() + Math.random();
+            uploadedAssets[type].push({ id, name: file.name, data: e.target.result });
+            
+            const container = getAssetContainer(type);
+            if (container) {
+                const div = document.createElement('div');
+                div.className = 'result-item success uploaded-item';
+                div.id = `upload-${id}`;
+                div.innerHTML = `
+                    <button class="btn-img-delete" onclick="removeUploadedAsset('${type}', '${id}')">×</button>
+                    <img src="${e.target.result}" alt="uploaded">
+                    <p>${file.name}</p>
+                `;
+                container.prepend(div);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function removeUploadedAsset(type, id) {
+    const idx = uploadedAssets[type].findIndex(a => String(a.id) === String(id));
+    if (idx >= 0) uploadedAssets[type].splice(idx, 1);
+    const el = document.getElementById(`upload-${id}`);
+    if (el) el.remove();
 }
 
 async function generateAssets(type) {
@@ -434,8 +460,8 @@ async function generateAssets(type) {
     const ratio = document.getElementById(prefix + 'Ratio')?.value || '16:9';
 
     const payload = { asset_type: type, provider, style_prompt: stylePrompt, resolution, ratio };
-    if (uploadedAssets[type]) {
-        payload.uploaded_image = uploadedAssets[type].data;
+    if (uploadedAssets[type] && uploadedAssets[type].length > 0) {
+        payload.uploaded_images = uploadedAssets[type].map(a => a.data);
     }
 
     showLoading(`正在生成${typeName}...`);
@@ -535,18 +561,37 @@ function toggleAudioOptions() {
     // no-op - hint removed
 }
 
-let refImageData = null;
+let refImageData = [];
 
 function handleRefImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-    document.getElementById('refImageName').textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        refImageData = e.target.result;
-        document.getElementById('refImagePreview').innerHTML = `<img src="${e.target.result}" alt="reference">`;
-    };
-    reader.readAsDataURL(file);
+    const files = input.files;
+    if (!files.length) return;
+    
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const id = Date.now() + Math.random();
+            refImageData.push({ id, name: file.name, data: e.target.result });
+            const preview = document.getElementById('refImagePreview');
+            const div = document.createElement('div');
+            div.className = 'ref-img-item';
+            div.id = `ref-${id}`;
+            div.innerHTML = `
+                <button class="btn-img-delete" onclick="removeRefImage('${id}')">×</button>
+                <img src="${e.target.result}" alt="ref">
+                <span>${file.name}</span>
+            `;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function removeRefImage(id) {
+    refImageData = refImageData.filter(a => String(a.id) !== String(id));
+    const el = document.getElementById(`ref-${id}`);
+    if (el) el.remove();
 }
 
 function toggleRefImage() {
