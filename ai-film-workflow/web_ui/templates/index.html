@@ -235,10 +235,12 @@
             <!-- ===== 阶段五：制作成片 ===== -->
             <section class="stage-panel" id="stagePanel5" style="display:none;">
                 <h2>🎥 阶段五：制作成片</h2>
-                <p class="stage-desc">自动生成视频片段 + 配音 + 音乐 + 音效，然后合成最终成片。</p>
                 
-                <label class="select-label">模型选择</label>
-                <select id="videoProvider" onchange="updateVideoOptions()">
+                <!-- 全局视频设置 -->
+                <div class="video-global-settings">
+                    <p class="stage-desc">设置所有镜头的默认参数，可单独调整每个镜头</p>
+                    <label class="select-label">模型选择</label>
+                    <select id="videoProvider" onchange="updateVideoOptions()">
                     <option value="seedance-2.0">Seedance 2.0</option>
                     <option value="seedance-2.0-fast">Seedance 2.0 Fast</option>
                     <option value="seedance-2.0-mini">Seedance 2.0 Mini</option>
@@ -291,7 +293,14 @@
                     </div>
                     <div id="refImagePreview" class="ref-preview"></div>
                 </div>
-                <button onclick="makeFilm()" class="btn-primary btn-large">制作成片</button>
+
+                <!-- 镜头列表 -->
+                <h3 class="shot-list-title" id="shotListTitle">🎬 镜头列表</h3>
+                <button onclick="loadShotList()" class="btn-secondary" style="margin-bottom:12px">📋 加载分镜镜头</button>
+                <div id="shotList" class="shot-list"></div>
+
+                <!-- 合成 -->
+                <button onclick="combineFilm()" class="btn-primary btn-large" style="margin-top:20px">🎬 合成最终成片</button>
                 <div id="filmProgress" class="film-progress" style="display:none;"></div>
                 <div id="finalResult" class="final-result"></div>
             </section>

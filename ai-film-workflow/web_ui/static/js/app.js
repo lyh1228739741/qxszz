@@ -145,11 +145,12 @@ async function loadPrevStageContent(stage) {
                 const data = result.content;
                 let shots = data.shots || [];
                 const characters = data.characters || [];
+                if (shots.length === 0 && data.scenes) {
+                    data.scenes.forEach(sc => { if (sc.shots) shots = shots.concat(sc.shots); });
+                }
                 if (shots.length === 0) {
                     for (const key of Object.keys(data)) {
-                        if (key.startsWith('scene_') && data[key].shots) {
-                            shots = shots.concat(data[key].shots);
-                        }
+                        if (key.startsWith('scene_') && data[key].shots) shots = shots.concat(data[key].shots);
                     }
                 }
                 
@@ -198,6 +199,9 @@ async function loadPrevStageContent(stage) {
             const result = await apiCall(`/api/project/${currentProject}/stage2/storyboard`);
             if (result.content) {
                 let shots = result.content.shots || [];
+                if (shots.length === 0 && result.content.scenes) {
+                    result.content.scenes.forEach(sc => { if (sc.shots) shots = shots.concat(sc.shots); });
+                }
                 if (shots.length === 0) {
                     for (const key of Object.keys(result.content)) {
                         if (key.startsWith('scene_') && result.content[key].shots) shots = shots.concat(result.content[key].shots);
@@ -537,17 +541,19 @@ async function reviseStoryboard() {
 function displayStoryboard(storyboard) {
     const display = document.getElementById('storyboardDisplay');
     
-    // 提取所有镜头（支持扁平 shots 和嵌套 scene_NN.shots 两种格式）
+    // 提取所有镜头（支持三种格式）
     let shots = storyboard.shots || [];
+    if (shots.length === 0 && storyboard.scenes) {
+        // 格式: { scenes: [{ shots: [...] }] }
+        storyboard.scenes.forEach(sc => {
+            if (sc.shots) shots = shots.concat(sc.shots);
+        });
+    }
     if (shots.length === 0) {
-        // 尝试从嵌套场景中提取
+        // 格式: { scene_01: { shots: [...] }, scene_02: ... }
         for (const key of Object.keys(storyboard)) {
             if (key.startsWith('scene_') && storyboard[key].shots) {
-                const sceneShots = storyboard[key].shots.map(s => ({
-                    ...s,
-                    scene: s.scene || storyboard[key].description || key
-                }));
-                shots = shots.concat(sceneShots);
+                shots = shots.concat(storyboard[key].shots);
             }
         }
     }
@@ -839,7 +845,145 @@ function toggleAudioSelects() {
     });
 }
 
+// ========== 多镜头视频生成 ==========
+
+let videoShots = [];
+
+async function loadShotList() {
+    if (!currentProject) { showError('请先选择项目'); return; }
+    
+    showLoading('加载分镜数据...');
+    try {
+        const result = await apiCall(`/api/project/${currentProject}/stage2/storyboard`);
+        let shots = result.content?.shots || [];
+        if (shots.length === 0 && result.content?.scenes) {
+            result.content.scenes.forEach(sc => { if (sc.shots) shots = shots.concat(sc.shots); });
+        }
+        if (shots.length === 0) {
+            for (const key of Object.keys(result.content || {})) {
+                if (key.startsWith('scene_') && result.content[key].shots) shots = shots.concat(result.content[key].shots);
+            }
+        }
+        
+        if (shots.length === 0) { showError('没有找到分镜数据，请先生成阶段二的分镜'); return; }
+        
+        videoShots = shots.map((s, i) => ({
+            ...s,
+            index: i,
+            shotId: s.shot_id || `shot_${i+1}`,
+            status: 'pending',
+            videoUrl: null
+        }));
+        
+        renderShotCards();
+        document.getElementById('shotListTitle').textContent = `🎬 镜头列表（${videoShots.length}个镜头）`;
+        showSuccess(`已加载 ${videoShots.length} 个镜头`);
+    } catch(e) { showError(e.message); }
+    finally { hideLoading(); }
+}
+
+function renderShotCards() {
+    const container = document.getElementById('shotList');
+    container.innerHTML = videoShots.map((shot, i) => {
+        const desc = (shot.description || shot.ai_image_prompt || '').substring(0, 60);
+        const statusIcon = { pending: '⏳', generating: '🔄', done: '✅', failed: '❌' }[shot.status] || '⏳';
+        return `
+        <div class="shot-card" id="shotCard${i}">
+            <div class="shot-card-header">
+                <span class="shot-card-id">${statusIcon} ${shot.shotId}</span>
+                <span class="shot-card-desc">${desc}</span>
+            </div>
+            <div class="shot-card-body">
+                <div class="shot-card-controls">
+                    <div><label>时长</label>
+                        <input type="range" id="shotDur${i}" min="2" max="15" value="5" oninput="document.getElementById('shotDurLabel${i}').textContent=this.value+'s'">
+                        <span id="shotDurLabel${i}">5s</span>
+                    </div>
+                </div>
+                ${shot.status === 'done' && shot.videoUrl ? `<video src="${shot.videoUrl}" controls class="shot-video"></video>` : ''}
+                <button onclick="generateShot(${i})" class="btn-primary" ${shot.status === 'done' ? 'disabled' : ''}>
+                    ${shot.status === 'done' ? '已生成 ✓' : shot.status === 'generating' ? '生成中...' : '生成此镜头'}
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function generateShot(index) {
+    if (!currentProject) return;
+    const shot = videoShots[index];
+    if (!shot) return;
+    
+    shot.status = 'generating';
+    renderShotCards();
+    
+    showLoading(`生成镜头 ${shot.shotId}...`);
+    try {
+        const result = await apiCall(`/api/project/${currentProject}/stage5a/generate`, 'POST', {
+            use_images: document.getElementById('useImages').checked,
+            shots: [{ shot_id: shot.shotId, prompt: shot.ai_video_prompt || shot.ai_image_prompt }],
+            provider: document.getElementById('videoProvider').value
+        }, true);
+        
+        if (result.results && result.results[0]) {
+            const r = result.results[0];
+            if (r.status === 'success' && r.filepath) {
+                shot.status = 'done';
+                const filename = r.filepath.split('\\').pop().split('/').pop();
+                shot.videoUrl = `/api/project/${currentProject}/files/${filename}`;
+            } else {
+                shot.status = 'failed';
+            }
+        }
+    } catch(e) {
+        shot.status = 'failed';
+    }
+    
+    renderShotCards();
+    hideLoading();
+}
+
+async function combineFilm() {
+    if (!currentProject) { showError('请先选择项目'); return; }
+    
+    const progressDiv = document.getElementById('filmProgress');
+    progressDiv.style.display = 'block';
+    progressDiv.innerHTML = '<p>正在合成最终成片...</p>';
+    
+    const outputName = document.getElementById('outputName').value.trim() || null;
+    const skipAudio = document.getElementById('skipAudio').checked;
+    
+    try {
+        const finalResult = await apiCall(`/api/project/${currentProject}/stage5c/compose`, 'POST', {
+            output_name: outputName, skip_audio: skipAudio
+        }, true);
+        const container = document.getElementById('finalResult');
+        const filename = finalResult.final_video.split('\\').pop().split('/').pop();
+        container.innerHTML = `<h3>🎉 成片完成!</h3>
+            <video controls width="100%">
+                <source src="/api/project/${currentProject}/files/${filename}" type="video/mp4">
+            </video><p>${finalResult.final_video}</p>`;
+        stageCompletion[5] = true;
+        updateProgressBar();
+        progressDiv.innerHTML += '<p class="success">成片制作完成!</p>';
+    } catch(e) {
+        progressDiv.innerHTML += `<p class="error">失败: ${e.message}</p>`;
+    }
+}
+
+// 保留旧 makeFilm 兼容
 async function makeFilm() {
+    await loadShotList();
+    if (videoShots.length === 0) return;
+    // 逐个生成
+    for (let i = 0; i < videoShots.length; i++) {
+        if (videoShots[i].status === 'pending') {
+            await generateShot(i);
+            if (videoShots[i].status === 'failed') break;
+        }
+    }
+    await combineFilm();
+}
     if (!currentProject) { showError('请先选择项目'); return; }
 
     const outputName = document.getElementById('outputName').value.trim() || null;

@@ -412,3 +412,20 @@ label input[type="checkbox"] { width: auto; }
 .extract-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; }
 .extract-col strong { display: block; margin-bottom: 4px; font-size: 0.9em; color: #e94560; }
 .extract-col textarea { font-size: 0.85em; min-height: 80px; }
+
+
+/* ¾µÍ·¿¨Æ¬ */
+.shot-list-title { color: #e94560; margin-top: 20px; margin-bottom: 10px; }
+.shot-list { display: flex; flex-direction: column; gap: 12px; }
+.shot-card { background: rgba(255,255,255,0.04); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
+.shot-card-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05); }
+.shot-card-id { color: #e94560; font-weight: bold; font-size: 0.9em; white-space: nowrap; }
+.shot-card-desc { color: #888; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shot-card-body { padding: 12px 14px; }
+.shot-card-controls { margin-bottom: 10px; }
+.shot-card-controls div { display: flex; align-items: center; gap: 8px; }
+.shot-card-controls label { color: #888; font-size: 0.85em; margin: 0; }
+.shot-card-controls input[type='range'] { flex: 1; accent-color: #e94560; margin: 0; }
+.shot-card-controls span { color: #e94560; font-weight: bold; font-size: 0.9em; }
+.shot-video { width: 100%; max-height: 200px; border-radius: 6px; margin: 8px 0; }
+.video-global-settings { margin-bottom: 16px; }
