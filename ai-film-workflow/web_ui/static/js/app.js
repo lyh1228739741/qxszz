@@ -247,13 +247,12 @@ async function generateScript() {
     let idea = document.getElementById('ideaInput').value.trim();
     if (!idea && !uploadedScriptContent) { showError('请输入创意或上传剧本文件'); return; }
 
-    const style = document.getElementById('styleInput').value;
     const provider = document.getElementById('scriptProvider').value;
 
     showLoading('正在生成剧本...');
     try {
         const result = await apiCall(`/api/project/${currentProject}/stage1/generate`, 'POST', {
-            idea, style, provider, uploaded_content: uploadedScriptContent
+            idea, style: '', provider, uploaded_content: uploadedScriptContent
         });
         document.getElementById('scriptDisplay').textContent = result.script;
         document.getElementById('scriptRevision').style.display = 'block';
@@ -282,12 +281,11 @@ async function reviseScript() {
 
 async function generateStoryboard() {
     if (!currentProject) { showError('请先选择项目'); return; }
-    const style = document.getElementById('visualStyle').value;
     const provider = document.getElementById('storyboardProvider').value;
 
     showLoading('正在生成分镜脚本...');
     try {
-        const result = await apiCall(`/api/project/${currentProject}/stage2/generate`, 'POST', { style, provider });
+        const result = await apiCall(`/api/project/${currentProject}/stage2/generate`, 'POST', { style: '', provider });
         displayStoryboard(result.storyboard);
         document.getElementById('storyboardRevision').style.display = 'block';
         stageCompletion[2] = true;
@@ -337,6 +335,29 @@ function switchAssetTab(tab) {
     });
 }
 
+// 风格预设数据
+const stylePresets = {
+    '3d_guochao': '3D动画风格，皮克斯风格，现代东方美学，高端CG渲染，次表面散射(SSS)，柔和影棚光，干净纹理，流体模拟',
+    'ink_wash': '中国传统水墨画风格，水彩，泼墨，干湿笔触，留白意境，宣纸纹理，黑白淡彩，写意抽象，禅意氛围',
+    'anime_cel': '日式动画风格，卡通阴影，新海诚风格，鲜艳清新色彩，清晰黑色轮廓线，硬边阴影，镜头光晕，高细节背景',
+    'hyperreal': '电影级摄影，照片级写实，专业摄像质感，8k分辨率，电影景深，胶片颗粒，戏剧性布光，真实皮肤纹理，光线追踪，超写实',
+    'pixel_art': '像素艺术风格，16位复古游戏美学，清晰像素点，锯齿边缘，有限色板，抖动算法，怀旧街机风格',
+    '2d_chibi': '2D矢量插画，扁平Q版卡通风格，粗轮廓线，贴纸艺术，明亮纯色，简单图形，可爱夸张，矢量图形',
+    'noir_film': '黑白黑色电影风格，复古摄影，高对比度，明暗对照法布光，重度胶片颗粒，戏剧性阴影，神秘氛围，1940年代电影质感',
+    'handdrawn': '手绘素描风格，铅笔画，石墨线条，粗糙排线，单色，白纸背景，未完成艺术感，极简线稿'
+};
+
+function updateStylePrompt() {
+    const checkboxes = document.querySelectorAll('#stylePresets input[type=checkbox]:checked');
+    const prompts = [];
+    checkboxes.forEach(cb => {
+        if (stylePresets[cb.value]) {
+            prompts.push(stylePresets[cb.value]);
+        }
+    });
+    document.getElementById('stylePromptCustom').value = prompts.join('；');
+}
+
 function handleAssetUpload(type, input) {
     const file = input.files[0];
     if (!file) return;
@@ -358,8 +379,9 @@ async function generateAssets(type) {
     const typeNames = { characters: '角色', scenes: '场景', props: '道具' };
     const typeName = typeNames[type] || type;
     const provider = document.getElementById('imageProvider').value;
+    const stylePrompt = document.getElementById('stylePromptCustom').value.trim();
 
-    const payload = { asset_type: type, provider };
+    const payload = { asset_type: type, provider, style_prompt: stylePrompt };
     if (uploadedAssets[type]) {
         payload.uploaded_image = uploadedAssets[type].data;
     }

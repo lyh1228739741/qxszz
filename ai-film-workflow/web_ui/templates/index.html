@@ -74,7 +74,6 @@
                     </label>
                     <span id="scriptUploadName" class="upload-name"></span>
                 </div>
-                <input type="text" id="styleInput" placeholder="风格要求（可选）">
                 <label class="select-label">模型选择</label>
                 <select id="scriptProvider">
                     <option value="kimi">Kimi</option>
@@ -94,7 +93,6 @@
             <!-- ===== 阶段二：分镜脚本 ===== -->
             <section class="stage-panel" id="stagePanel2" style="display:none;">
                 <h2>🎬 阶段二：分镜脚本</h2>
-                <input type="text" id="visualStyle" placeholder="视觉风格补充（可选）">
                 <label class="select-label">模型选择</label>
                 <select id="storyboardProvider">
                     <option value="kimi">Kimi</option>
@@ -114,6 +112,21 @@
             <!-- ===== 阶段三：资产 ===== -->
             <section class="stage-panel" id="stagePanel3" style="display:none;">
                 <h2>🎨 阶段三：资产（角色 / 场景 / 道具）</h2>
+                
+                <!-- 风格预设 -->
+                <label class="select-label">风格选择</label>
+                <div class="style-presets" id="stylePresets">
+                    <label class="style-check"><input type="checkbox" value="3d_guochao" onchange="updateStylePrompt()"> 3D国潮动漫</label>
+                    <label class="style-check"><input type="checkbox" value="ink_wash" onchange="updateStylePrompt()"> 中式水墨风格</label>
+                    <label class="style-check"><input type="checkbox" value="anime_cel" onchange="updateStylePrompt()"> 日式赛璐璐风格</label>
+                    <label class="style-check"><input type="checkbox" value="hyperreal" onchange="updateStylePrompt()"> 超写实风格</label>
+                    <label class="style-check"><input type="checkbox" value="pixel_art" onchange="updateStylePrompt()"> 像素风格</label>
+                    <label class="style-check"><input type="checkbox" value="2d_chibi" onchange="updateStylePrompt()"> 2DQ版风格</label>
+                    <label class="style-check"><input type="checkbox" value="noir_film" onchange="updateStylePrompt()"> 黑白电影风格</label>
+                    <label class="style-check"><input type="checkbox" value="handdrawn" onchange="updateStylePrompt()"> 手绘风格</label>
+                </div>
+                <textarea id="stylePromptCustom" placeholder="选择风格后，风格描述会出现在这里。你也可以自由编辑..." rows="4" onchange="updateStylePrompt()"></textarea>
+
                 <div class="asset-tabs">
                     <button class="tab-btn active" onclick="switchAssetTab('characters')">角色</button>
                     <button class="tab-btn" onclick="switchAssetTab('scenes')">场景</button>

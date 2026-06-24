@@ -17,18 +17,25 @@ from config.api_config import GPT_IMAGE_API_KEY, GPT_IMAGE_BASE_URL
 
 
 class ImageGenerator:
-    def __init__(self):
+    def __init__(self, style_prompt: str = ""):
         self.client = BaseAPIClient(GPT_IMAGE_API_KEY, GPT_IMAGE_BASE_URL)
         self.output_dir = Path("output/images")
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.style_prompt = style_prompt
+    
+    def _apply_style(self, prompt: str) -> str:
+        if self.style_prompt:
+            return f"{prompt}\n\nStyle requirements: {self.style_prompt}"
+        return prompt
     
     def generate(self, prompt: str, shot_id: str, size: str = "1024x1024", 
                  quality: str = "hd", style: str = "vivid") -> str:
         print(f"[Stage 3] Generating image [{shot_id}]...")
+        final_prompt = self._apply_style(prompt)
         
         payload = {
             "model": "gpt-image-2",
-            "prompt": prompt,
+            "prompt": final_prompt,
             "n": 1,
             "size": size,
             "quality": quality,

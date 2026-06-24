@@ -191,6 +191,20 @@ select option { background: #1a1a2e; color: #eee; }
 }
 .revision-area { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
 
+/* 风格预设 */
+.style-presets {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+    gap: 10px; margin-bottom: 12px;
+}
+.style-check {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.06); padding: 8px 12px;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s;
+    border: 1px solid rgba(255,255,255,0.08); font-size: 0.9em;
+}
+.style-check:hover { background: rgba(233,69,96,0.15); border-color: rgba(233,69,96,0.3); }
+.style-check input[type="checkbox"] { width: auto; margin: 0; accent-color: #e94560; }
+
 /* 资产 tabs */
 .asset-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
 .tab-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px 6px 0 0; padding: 10px 20px; cursor: pointer; color: #aaa; font-size: 0.95em; }
